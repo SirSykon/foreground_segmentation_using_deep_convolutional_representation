@@ -6,110 +6,150 @@ import math
 from glob import glob
 import tensorflow as tf
 import tensorflow.keras.layers as layers
-import utils.clip_utils as clip_utils
 from config import Config
-import utils.GPU_utils as GPU_utils             # pylint: disable=no-name-in-module
-import utils.datagen_utils as datagen_utils     # pylint: disable=no-name-in-module
-import Predictor
+import GPU_utils as GPU_utils               # pylint: disable=no-name-in-module
+import data_utils                           # pylint: disable=no-name-in-module
+import Autoencoder
 
 GPU_utils.tensorflow_2_x_dark_magic_to_restrict_memory_use(Config.GPU_TO_USE)
 
-def load_dataset(split = True, normalization_range = (0,1), number_of_files_to_load = 100):
-    all_dataset = None
-    list_of_data_paths_for_training = sorted(glob(os.path.join(Config.NETWORK_TRAINING_DATA_PATH, "*")))
-    for data_file_path_index, data_file_path in enumerate(list_of_data_paths_for_training):
-        print("Loading {}.".format(data_file_path))
-        data_file = np.load(data_file_path)
-        if all_dataset is None:
-            all_dataset = data_file
-        else:
-            all_dataset = np.concatenate((all_dataset, data_file), axis = 0)
+if not os.path.isdir(Config.MODEL_FOLDER_PATH):             # If the folder to save the model does not exist,
+    os.makedirs(Config.MODEL_FOLDER_PATH)                   # We create it.
 
-        if data_file_path_index == number_of_files_to_load - 1:
-            break
-
-    dataset_size = all_dataset.shape[0]
-
+"""
+Function to normalize.
+inputs:
+    data : numpy array -> Data to normalize.
+    normalization_range -> Range to normalize data into.
+returns:
+    normalized data
+"""
+def normalize_data(data, normalization_range=(0,1):
     if normalization_range == (0,1):
-        all_dataset = all_dataset/255.
-    if normalization_range == (-1,1):
-        all_dataset = (all_dataset/127.5)-1
-
-    training_dataset_size = math.floor(dataset_size*(1-Config.VALIDATION_DATA_SPLIT_FOR_NETWORK_TRAINING))
-    print("Dataset size")
-    print(dataset_size)
-    training_dataset = all_dataset[:training_dataset_size]
+        return data/255.
     
-    if split:
-        print("Training dataset shape is {}.".format(training_dataset.shape))
-        print(np.max(training_dataset))
-        print(np.min(training_dataset))
+    if normalization_range = (-1,1):
+        return data/127.5 - 1
 
-        validation_dataset = all_dataset[training_dataset_size:]
-        print("Validation dataset shape is {}.".format(validation_dataset.shape))
-        print(np.max(validation_dataset))
-        print(np.min(validation_dataset))
-        
-        return training_dataset, validation_dataset
+"""
+Function to denormalize.
+inputs:
+    data : numpy array -> Data to denormalize.
+    normalization_range -> Range to denormalize data from.
+returns:
+    denormalized data
+"""
+def normalize_data(data, normalization_range=(0,1):
+    if normalization_range == (0,1):
+        return data*255.
     
-    else:
-        return all_dataset
+    if normalization_range = (-1,1):
+        return (data+1*)127.5
 
-if not os.path.isdir(Config.MODEL_FOLDER_PATH):
-    os.makedirs(Config.MODEL_FOLDER_PATH)
+reconstruction_loss = tf.keras.losses.MeanSquaredError()    # We define the reconstruction loss function.
 
-reconstruction_loss = tf.keras.losses.MeanSquaredError()    
-    
+"""
+Function to create a convolutional autoencoder model
+"""
 def make_convolutional_autoencoder_model():
-    return autoencoder
+    return Autoencoder.Convolutional_Autoencoder(Config.MODEL_FOLDER_PATH, load = False)
 
+"""
+Function to execute a train step.
+inputs:
+    images_batch : numpy array -> batch of images.
+    autoencoder : model -> autoencoder model to train.
+    aut_optimizer : optimizer -> optimizer to apply gradients to the model.
+"""
 # Notice the use of `tf.function`
 # This annotation causes the function to be "compiled".
 @tf.function
 def train_step(images_batch, autoencoder, aut_optimizer):
 
-    with tf.GradientTape() as aut_tape::
-        reconstructed_images_batch = autoencoder(images_batch, training=True)        
-        aut_loss = reconstruction_loss(images_batch, reconstructed_images_batch)
+    with tf.GradientTape() as aut_tape:
+        reconstructed_images_batch = autoencoder(images_batch, training=True)               # We apply the model to the batch.
+        aut_loss = reconstruction_loss(images_batch, reconstructed_images_batch)            # We calculate the autoencoded batch reconstruction loss.
     
-    gradients_of_aut = aut_tape.gradient(aut_loss, autoencoder.trainable_variables)    
-    aut_optimizer.apply_gradients(zip(gradients_of_aut, autoencoder.trainable_variables))    
-    rec_loss = reconstruction_loss(fake_next_frame_batch, real_next_frame_batch)
+    gradients_of_aut = aut_tape.gradient(aut_loss, autoencoder.trainable_variables)         # We get the gradients.
+    aut_optimizer.apply_gradients(zip(gradients_of_aut, autoencoder.trainable_variables))   # We use the optimizer to apply the gradients to the model.
 
-    return rec_loss, reconstructed_images_batch
+    return aut_loss, reconstructed_images_batch                                             # We return the autoencoder loss and the reconstruction.
 
-def train(training_dataset_generator, autoencoder, checkpoint, steps_per_epoch, visual_test_clip=None):
-    for epoch in range(Config.EPOCHS):
-        start = time.time()
-        print("Epoch {}.".format(epoch+1))
-        loss_vector = np.zeros(shape=(Config.STEPS_PER_EPOCH, 1), dtype=np.float32)
+"""
+Function to execute the training loop.
+inputs:
+    training_dataset_generator : generator -> Generator to obtain batches to train.
+    validation_dataset_generator : generator -> Generator to obtain batches to validate.
+    autoencoder : model -> Autoencoder model.
+    checkpoint : checkpoint
+    training_steps_per_epoch : Number of training steps for each epoch.
+    validation_steps_per_epoch : Number of validation steps for each epoch.
+    vistual_test_clip : image -> Image to apply the model and save the output as visual reference.
+"""
+def train(training_dataset_generator, validation_dataset_generator, autoencoder, checkpoint, training_steps_per_epoch, validation_steps_per_epoch, visual_test_clip=None):
+    for epoch in range(Config.EPOCHS):                                                                      # For each epoch...
+        start = time.time()                                                                                 # We get the time reference.
+        print("Epoch {}.".format(epoch+1))                                          
+        training_loss_vector = np.zeros(shape=training_steps_per_epoch, dtype=np.float32)                   # We initialize a loss vector to save training losses.
+        validation_loss_vector = np.zeros(shape=(validation_steps_per_epoch, dtype=np.float32)              # We initialize a loss vector to save validation losses.
 
-        for batch_index, clip_batch in enumerate(training_dataset_generator):
-            rec_loss, reconstructed_images_batch = train_step(images_batch, autoencoder, aut_optimizer)
-            loss_vector[batch_index, 0] = rec_loss
+        # Training phase.
+        for batch_index, images_batch in enumerate(training_dataset_generator):                             # For each batch we obtain...
+            rec_loss, reconstructed_images_batch = train_step(images_batch, autoencoder, aut_optimizer)     # We apply a train step.
+            training_loss_vector[batch_index] = rec_loss                                                    # We save the loss into the training loss vector.
             
-            assert np.array_equal(real_clip_batch, clip_batch)
-            assert np.array_equal(fake_clip_batch[:,:-1], clip_batch[:,:-1])
+            if batch_index == training_steps_per_epoch - 1:                                                 # If we reach the number of training_steps_per_epoch.
+                break                                                                                       # We break the loop. This is ugly but don't blame me, blame the system.
+        
+        # Validation phase.
+        for batch_index, images_batch in enumerate(validation_dataset_generator):                           # For each batch we obtain...
+            reconstructed_images_batch = autoencoder(images_batch)                                          # We apply the autoencoder to the batch.
+            rec_loss = reconstruction_loss(images_batch, reconstructed_images_batch)                        # We calculate the reconstruction error loss.
+            validation_loss_vector[batch_index] = rec_loss                                                  # We save the loss into the validation loss vector.
             
-            if batch_index == steps_per_epoch - 1:
-                break
-
+            if batch_index == validation_steps_per_epoch - 1:                                               # If we reach the number of validation_steps_per_epoch.
+                break                                                                                       # We break the loop. This is ugly but don't blame me, blame the system.
+        
         # Save the model every 15 epochs
         if (epoch + 1) % 15 == 0:
             checkpoint.save(file_prefix = checkpoint_prefix)
 
-        print('Time for epoch {} is {} sec with generator loss {}, global discriminator loss {}, local discriminator loss {} and reconstruction loss (calculate but not used in training) {}.'.format(epoch + 1, time.time()-start, np.mean(loss_vector[:, 0]),np.mean(loss_vector[:, 1]),np.mean(loss_vector[:, 2]),np.mean(loss_vector[:, 3])))
+        print('Time for epoch {} is {} sec with average training loss {} after {} training steps and average validation loss {} after {} validation steps.'.format(epoch + 1, time.time()-start, np.mean(training_loss_vector), training_steps_per_epoch, np.mean(validation_loss_vector), validation_steps_per_epoch))
 
         if not visual_test_clip is None:
             print("Saving test clip.")
-            print("Visual test batch shape: {}".format(visual_test_clip.shape))
-            reconstruction = autoencoder.predict(np.expand_dims(visual_test_clip, axis=0))
+            print("Visual test shape: {}".format(visual_test_clip.shape))
+            reconstruction = autoencoder(np.expand_dims(visual_test_clip, axis=0))
             print("Prediction shape: {}".format(prediction.shape))
             image_utils.print_image((prediction[0]+1)*127.5, os.path.join(Config.MAIN_OUTPUT_FOLDER, "testAutoencoder0"), image_preffix="reconstructed_image_{}".format(epoch+1))
             print("Reconstruction loss: {}".format(reconstruction_loss(np.expand_dims(visual_test_clip, axis=0), prediction)))
             #print("Discriminator: {}".format(discriminator(prediction)))
 
-autoencoder_optimizer = tf.keras.optimizers.Adam(1e-4)
+data_files_paths = glob(os.path.join(Config.NETWORK_TRAINING_DATA_PATH, "*"))
+random.shuffle(data_files_paths)
+number_of_files = len(data_files_paths)
+
+validation_number_of_files = int(number_of_files*Config.VALIDATION_DATA_SPLIT_FOR_NETWORK_TRAINING)
+
+basic_training_data_generator = data_utils.data_generator(
+    data_files_paths = data_files_paths[validation_number_of_files:], 
+    batch_size = Config.BATCH_SIZE, 
+    change_file_after_getting_x_data_batches = 50)
+autoencoder_training_generator = autoencoder_data_generator(
+    basic_training_data_generator, 
+    preprocessing_function = normalize_data, 
+    y_preprocessing_function = None)
+
+basic_validation_data_generator = data_utils.data_generator(
+    data_files_paths = data_files_paths[:validation_number_of_files], 
+    batch_size = Config.BATCH_SIZE, 
+    change_file_after_getting_x_data_batches = 50)    
+autoencoder_validation_generator = autoencoder_data_generator(
+    basic_validation_data_generator, 
+    preprocessing_function = normalize_data, 
+    y_preprocessing_function = None)
+
+autoencoder_optimizer = tf.keras.optimizers.Adam(1e-3)
 
 autoencoder = make_convolutional_autoencoder_model()
 print(len(autoencoder.trainable_variables))
@@ -121,9 +161,7 @@ checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
                                  generator=generator,
                                  global_discriminator=global_discriminator,
                                  local_discriminator=local_discriminator)
-
-all_dataset = load_dataset(split = False, normalization_range = (-1,1), number_of_files_to_load = 7)
-clip_generator_class = datagen_utils.clip_generator(all_dataset[2:], Config.BATCH_SIZE, load_from_memory = True)
+                                
 
 """
 for x in clip_generator_class.batch_generator():
@@ -136,21 +174,21 @@ quit()
 #predictor.fit(clip_dataset, epochs = Config.epochs)
 
 #visual_test_clip = np.load(os.path.join(Config.clip_dataset_path, "clip_0000001.npy"))
-visual_test_clip = all_dataset[0]
-print("Saving test clip.")
-print("Visual test batch shape: {}".format(visual_test_clip.shape))
-reconstruction = autoencoder.predict(np.expand_dims(visual_test_clip, axis=0))
-print("Prediction shape: {}".format(prediction.shape))
-image_utils.print_image((prediction[0]+1)*127.5, os.path.join(Config.MAIN_OUTPUT_FOLDER, "testAutoencoder0"), image_preffix="reconstructed_image_{}".format(epoch+1))
-print("Reconstruction loss: {}".format(reconstruction_loss(np.expand_dims(visual_test_clip, axis=0), prediction)))
-    
+#visual_test_clip = all_dataset[0]
+#print("Saving test clip.")
+#print("Visual test batch shape: {}".format(visual_test_clip.shape))
+#reconstruction = autoencoder.predict(np.expand_dims(visual_test_clip, axis=0))
+#print("Prediction shape: {}".format(prediction.shape))
+#image_utils.print_image((prediction[0]+1)*127.5, os.path.join(Config.MAIN_OUTPUT_FOLDER, "testAutoencoder0"), image_preffix="reconstructed_image_{}".format(epoch+1))
+#print("Reconstruction loss: {}".format(reconstruction_loss(np.expand_dims(visual_test_clip, axis=0), prediction)))
+
 train(
-    clip_generator_class, 
-    generator, 
-    global_discriminator,
-    local_discriminator, 
-    generator_optimizer, 
-    discriminator_optimizer, 
+    autoencoder_training_generator, 
+    autoencoder_validation_generator, 
+    autoencoder, 
     checkpoint, 
-    Config.STEPS_PER_EPOCH, 
-    visual_test_clip=visual_test_clip)
+    Config.STEPS_PER_EPOCH,
+    int(Config.STEPS_PER_EPOCH/10), 
+    visual_test_clip=None)
+    
+autoencoder.save()

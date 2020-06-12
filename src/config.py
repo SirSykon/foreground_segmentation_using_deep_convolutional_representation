@@ -27,6 +27,7 @@ class Config:
     EPOCHS = 1000                                                                                                       # Network training epochs.
     STEPS_PER_EPOCH = 500                                                                                               # How many batches do we use to train within each epoch?
     PATCH_IMG_SIZE = (64,64)                                                                                            # Patches image shape.
+    NUM_CHANNELS = 3                                                                                                    # Number of channels.
     TRAINING_DATA_SIZE = 400000                                                                                         # How many instances should we get to train the autoencoder?
     TRAINING_DATA_PER_FILE = 10000                                                                                      # Ho many isntances should we introduce in each file?
     GPU_TO_USE = 1                                                                                                      # GPU to use.
