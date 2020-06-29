@@ -19,13 +19,13 @@ class Config:
         
     NETWORK_TRAINING_DATA_PATH = MAIN_OUTPUT_FOLDER + "network_training_data/"                                          # Path to network training data.
     NETWORK_TRAINING_DATA_FILES_NAME_STRUCTURE = "training_data_file_{}.npy"
-    NETWORK_MODEL_NAME = "network_1"                                                                                    # Network model name.
+    NETWORK_MODEL_NAME = "fully_convolutional"                                                                          # Network model name.
     MODELS_FOLDER = MAIN_OUTPUT_FOLDER + "models/"                                                                      # Path to models folder.
     MODEL_FOLDER_PATH = MODELS_FOLDER+NETWORK_MODEL_NAME+"/"                                                            # Path to network model folder.
     
     BATCH_SIZE = 64                                                                                                     # Network training batch size.
-    EPOCHS = 1000                                                                                                       # Network training epochs.
-    STEPS_PER_EPOCH = 500                                                                                               # How many batches do we use to train within each epoch?
+    EPOCHS = 20                                                                                                         # Network training epochs.
+    STEPS_PER_EPOCH = 5000                                                                                              # How many batches do we use to train within each epoch?
     PATCH_IMG_SIZE = (64,64)                                                                                            # Patches image shape.
     NUM_CHANNELS = 3                                                                                                    # Number of channels.
     TRAINING_DATA_SIZE = 400000                                                                                         # How many instances should we get to train the autoencoder?

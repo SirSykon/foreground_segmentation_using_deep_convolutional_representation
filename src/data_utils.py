@@ -84,7 +84,7 @@ def data_generator(data_files_paths = None, batch_size = 64, change_file_after_g
         
     while True:                                                                                             # We start to generate...
         indices = np.random.randint(current_data.shape[0], size=batch_size)                                 # We get the random indices.
-        batch = scurrent_data[indices]                                                                      # We get extract the batch
+        batch = current_data[indices]                                                                       # We get extract the batch
         number_of_batches_extracted_after_last_file_load += 1                                               # We increase the counter.
             
         if number_of_batches_extracted_after_last_file_load == change_file_after_getting_x_data_batches-1:  # if the counter have reached change_file_after_getting_x_data_batches,
@@ -105,15 +105,17 @@ output:
     y_data : batch -> Batch of data after apply y_proprocessing_function (if exists) to x_data.
 
 """
-def autoencoder_data_generator(source_generator, preprocessing_function = None, y_preprocessing_function = None):
+def autoencoder_data_generator(source_generator, preprocessing_function = None, x_preprocessing_function = None, y_preprocessing_function = None):
 
     for data in source_generator:                       # For each data from the source_generator...
         x_data = data.copy()                            # We copy the batch.
         if not preprocessing_function is None:          # If the preprocessing function exists,
             x_data = preprocessing_function(x_data)     # We apply it to the batch.
         y_data = x_data.copy()                          # We copy the batch as objective y_batch.
+        if not x_preprocessing_function is None:        # If x_preprocessing_function_exists,
+            x_data = x_preprocessing_function(x_data)   # We apply it to the x_batch.
         if not y_preprocessing_function is None:        # If y_preprocessing_function_exists,
             y_data = y_preprocessing_function(y_data)   # We apply it to the y_batch.
             
-        return x_data, y_data                           # We return both x and y batches.
+        yield (x_data, y_data)                         # We return both x and y batches.
         

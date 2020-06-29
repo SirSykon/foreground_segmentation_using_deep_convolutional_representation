@@ -24,11 +24,15 @@ inputs:
 returns:
     normalized data
 """
-def normalize_data(data, normalization_range=(0,1):
+def normalize_data(data, normalization_range=(0,1)):
     if normalization_range == (0,1):
+        assert np.max(data) <= 255.
+        assert np.min(data) >= 0.
         return data/255.
     
-    if normalization_range = (-1,1):
+    if normalization_range == (-1,1):
+        assert np.max(data) <= 255.
+        assert np.min(data) >= 0.
         return data/127.5 - 1
 
 """
@@ -39,12 +43,16 @@ inputs:
 returns:
     denormalized data
 """
-def normalize_data(data, normalization_range=(0,1):
+def denormalize_data(data, normalization_range=(0,1)):
     if normalization_range == (0,1):
+        assert np.max(data) <= 1.
+        assert np.min(data) >= 0.
         return data*255.
     
-    if normalization_range = (-1,1):
-        return (data+1*)127.5
+    if normalization_range == (-1,1):
+        assert np.max(data) <= 1.
+        assert np.min(data) >= -1.
+        return (data + 1)*127.5
 
 reconstruction_loss = tf.keras.losses.MeanSquaredError()    # We define the reconstruction loss function.
 
@@ -64,16 +72,16 @@ inputs:
 # Notice the use of `tf.function`
 # This annotation causes the function to be "compiled".
 @tf.function
-def train_step(images_batch, autoencoder, aut_optimizer):
+def train_step(x_batch, y_batch, autoencoder, aut_optimizer):
 
     with tf.GradientTape() as aut_tape:
-        reconstructed_images_batch = autoencoder(images_batch, training=True)               # We apply the model to the batch.
-        aut_loss = reconstruction_loss(images_batch, reconstructed_images_batch)            # We calculate the autoencoded batch reconstruction loss.
+        reconstructed_x_batch = autoencoder(x_batch, training=True)                         # We apply the model to the batch.
+        aut_loss = reconstruction_loss(y_batch, reconstructed_x_batch)                      # We calculate the autoencoded batch reconstruction loss.
     
     gradients_of_aut = aut_tape.gradient(aut_loss, autoencoder.trainable_variables)         # We get the gradients.
     aut_optimizer.apply_gradients(zip(gradients_of_aut, autoencoder.trainable_variables))   # We use the optimizer to apply the gradients to the model.
 
-    return aut_loss, reconstructed_images_batch                                             # We return the autoencoder loss and the reconstruction.
+    return aut_loss, reconstructed_x_batch                                                  # We return the autoencoder loss and the reconstruction.
 
 """
 Function to execute the training loop.
@@ -81,30 +89,33 @@ inputs:
     training_dataset_generator : generator -> Generator to obtain batches to train.
     validation_dataset_generator : generator -> Generator to obtain batches to validate.
     autoencoder : model -> Autoencoder model.
+    aut_optimizer : optimizer -> autoencoder to use with autoencoder.
     checkpoint : checkpoint
     training_steps_per_epoch : Number of training steps for each epoch.
     validation_steps_per_epoch : Number of validation steps for each epoch.
     vistual_test_clip : image -> Image to apply the model and save the output as visual reference.
 """
-def train(training_dataset_generator, validation_dataset_generator, autoencoder, checkpoint, training_steps_per_epoch, validation_steps_per_epoch, visual_test_clip=None):
+def train(training_dataset_generator, validation_dataset_generator, autoencoder, aut_optimizer, checkpoint, training_steps_per_epoch, validation_steps_per_epoch, visual_test_clip=None):
     for epoch in range(Config.EPOCHS):                                                                      # For each epoch...
         start = time.time()                                                                                 # We get the time reference.
         print("Epoch {}.".format(epoch+1))                                          
-        training_loss_vector = np.zeros(shape=training_steps_per_epoch, dtype=np.float32)                   # We initialize a loss vector to save training losses.
-        validation_loss_vector = np.zeros(shape=(validation_steps_per_epoch, dtype=np.float32)              # We initialize a loss vector to save validation losses.
+        training_loss_vector = np.zeros(shape=(training_steps_per_epoch), dtype=np.float32)                 # We initialize a loss vector to save training losses.
+        validation_loss_vector = np.zeros(shape=(validation_steps_per_epoch), dtype=np.float32)             # We initialize a loss vector to save validation losses.
 
         # Training phase.
-        for batch_index, images_batch in enumerate(training_dataset_generator):                             # For each batch we obtain...
-            rec_loss, reconstructed_images_batch = train_step(images_batch, autoencoder, aut_optimizer)     # We apply a train step.
+        for batch_index, training_data in enumerate(training_dataset_generator):                            # For each batch we obtain...
+            (x_batch, y_batch) = training_data
+            rec_loss, reconstructed_x_batch = train_step(x_batch, y_batch, autoencoder, aut_optimizer)      # We apply a train step.
             training_loss_vector[batch_index] = rec_loss                                                    # We save the loss into the training loss vector.
-            
+
             if batch_index == training_steps_per_epoch - 1:                                                 # If we reach the number of training_steps_per_epoch.
                 break                                                                                       # We break the loop. This is ugly but don't blame me, blame the system.
         
         # Validation phase.
-        for batch_index, images_batch in enumerate(validation_dataset_generator):                           # For each batch we obtain...
-            reconstructed_images_batch = autoencoder(images_batch)                                          # We apply the autoencoder to the batch.
-            rec_loss = reconstruction_loss(images_batch, reconstructed_images_batch)                        # We calculate the reconstruction error loss.
+        for batch_index, validation_data in enumerate(validation_dataset_generator):                        # For each batch we obtain...
+            (x_batch, y_batch) = validation_data
+            reconstructed_x_batch = autoencoder(x_batch)                                                    # We apply the autoencoder to the batch.
+            rec_loss = reconstruction_loss(y_batch, reconstructed_x_batch)                                  # We calculate the reconstruction error loss.
             validation_loss_vector[batch_index] = rec_loss                                                  # We save the loss into the validation loss vector.
             
             if batch_index == validation_steps_per_epoch - 1:                                               # If we reach the number of validation_steps_per_epoch.
@@ -135,32 +146,32 @@ basic_training_data_generator = data_utils.data_generator(
     data_files_paths = data_files_paths[validation_number_of_files:], 
     batch_size = Config.BATCH_SIZE, 
     change_file_after_getting_x_data_batches = 50)
-autoencoder_training_generator = autoencoder_data_generator(
+autoencoder_training_generator = data_utils.autoencoder_data_generator(
     basic_training_data_generator, 
     preprocessing_function = normalize_data, 
+    x_preprocessing_function = None,
     y_preprocessing_function = None)
 
 basic_validation_data_generator = data_utils.data_generator(
     data_files_paths = data_files_paths[:validation_number_of_files], 
     batch_size = Config.BATCH_SIZE, 
     change_file_after_getting_x_data_batches = 50)    
-autoencoder_validation_generator = autoencoder_data_generator(
+autoencoder_validation_generator = data_utils.autoencoder_data_generator(
     basic_validation_data_generator, 
-    preprocessing_function = normalize_data, 
+    preprocessing_function = normalize_data,
+    x_preprocessing_function = None,
     y_preprocessing_function = None)
 
 autoencoder_optimizer = tf.keras.optimizers.Adam(1e-3)
 
 autoencoder = make_convolutional_autoencoder_model()
+print(autoencoder)
 print(len(autoencoder.trainable_variables))
 print(autoencoder.trainable_variables[0].shape)
 
 checkpoint_prefix = os.path.join(Config.MODEL_FOLDER_PATH, "AUT_ckpt")
-checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
-                                 discriminator_optimizer=discriminator_optimizer,
-                                 generator=generator,
-                                 global_discriminator=global_discriminator,
-                                 local_discriminator=local_discriminator)
+checkpoint = tf.train.Checkpoint(autoencoder=autoencoder,
+                                 autoencoder_optimizer=autoencoder_optimizer)
                                 
 
 """
@@ -185,10 +196,11 @@ quit()
 train(
     autoencoder_training_generator, 
     autoencoder_validation_generator, 
-    autoencoder, 
+    autoencoder,
+    autoencoder_optimizer,
     checkpoint, 
     Config.STEPS_PER_EPOCH,
-    int(Config.STEPS_PER_EPOCH/10), 
+    int(Config.STEPS_PER_EPOCH*Config.VALIDATION_DATA_SPLIT_FOR_NETWORK_TRAINING), 
     visual_test_clip=None)
     
 autoencoder.save()

@@ -13,10 +13,6 @@ Class to define and use an autoencoder model and its parts.
 """
 
 class Autoencoder(tf.keras.Model):
-    encoder = None     # Encoder network
-    decoder = None     # Decoder network
-    autoencoder = None # Autoencoder network.
-    models_path = None # Path to the folder where we save or from where we load the models
 
     """
     Constructor
@@ -27,7 +23,7 @@ class Autoencoder(tf.keras.Model):
     """
     def __init__(self, models_path, load = False):
     
-        super(Autoencoder,self).__init__()
+        super(Autoencoder,self).__init__(name = "aut_model")
         
         self.models_path = models_path
         if load:
@@ -35,15 +31,16 @@ class Autoencoder(tf.keras.Model):
             self.load_encoder()
             self.load_decoder()
         else:
-            print("Path to save: {}".format(models_path))
-            self.optimizer = optimizer
-            self.loss_object = loss_object
-            self.define_encoder()
+            print("Path to save: {}".format(models_path))            
+            self.encoder = self.define_encoder()
+            print("Encoder defined")
             self.encoder.summary()
-            self.define_decoder()
+            self.decoder = self.define_decoder()
+            print("Decoder defined")
             self.decoder.summary()
             
-        self.define_autoencoder()
+        self.autoencoder = self.define_autoencoder()
+        print("Autoencoder defined")
         self.autoencoder.summary()
         
     """
@@ -97,7 +94,7 @@ class Autoencoder(tf.keras.Model):
         print(self.encoder.input)
         print(self.decoder.output)
         autoencoder_output = self.decoder(self.encoder(self.encoder.input))
-        self.autoencoder = tf.keras.Model(self.encoder.input, autoencoder_output)
+        return tf.keras.Model(self.encoder.input, autoencoder_output)
 
     """
     Method to predict using the encoder model.
@@ -158,30 +155,27 @@ class Convolutional_Autoencoder(Autoencoder):
     """
     def define_encoder(self):
         encoder_input_layer = layers.Input(shape=(None, None, Config.NUM_CHANNELS))     # We define the input with no defined height(H) and width(W). We wil guess the input is (None,64,64,3)
-        x = layers.Conv2D(64, (3,3), strides=(1,1), padding="valid", activation=tf.keras.layers.LeakyReLU())(input_layer)
+        x = layers.Conv2D(64, (3,3), strides=(1,1), padding="valid", activation=tf.keras.layers.LeakyReLU())(encoder_input_layer)
         assert x.shape.as_list() == [None, None, None, 64]                              # Here the output should be (None, 62, 62, 64)
         x = layers.Conv2D(32, (3,3), strides=(1,1), padding="valid", activation=tf.keras.layers.LeakyReLU())(x)
         assert x.shape.as_list() == [None, None, None, 32]                              # Here the output should be (None, 60, 60, 32)
         codification = layers.Conv2D(16, (3,3), strides=(1,1), padding="valid", activation="sigmoid")(x)
         assert codification.shape.as_list() == [None, None, None, 16]                   # Here the output should be (None, 58, 58, 16)
         
-        self.encoder = tf.keras.Model(encoder_input_layer, codification)
-        print("ENCODER")
-        print(self.encoder.summary())
+        return tf.keras.Model(encoder_input_layer, codification, name = "encoder_model")
 
     """
     Method to define the decoder model.
     """
     def define_decoder(self):
         decoder_input_layer = layers.Input(shape=self.encoder.output_shape[1:])
-        layers.Conv2DTranspose(32, (3,3), strides=(1,1), padding="valid", activation=tf.keras.layers.LeakyReLU())(input_layer)
+        x = layers.Conv2DTranspose(32, (3,3), strides=(1,1), padding="valid", activation=tf.keras.layers.LeakyReLU())(decoder_input_layer)
         assert x.shape.as_list() == [None, None, None, 32]                               # Here the output should be (None, 60, 60, 32)
-        layers.Conv2DTranspose(64, (3,3), strides=(1,1), padding="valid", activation=tf.keras.layers.LeakyReLU())(input_layer)
-        assert x.shape.as_list() == [None, 62, 62, 64]                                   # Here the output should be (None, 62, 62, 64)
-        decodification = layers.Conv2D(Config.NUM_CHANNELS, (3,3), strides=(1,1), padding="valid", activation="sigmoid")(x)
+        x = layers.Conv2DTranspose(64, (3,3), strides=(1,1), padding="valid", activation=tf.keras.layers.LeakyReLU())(x)
+        assert x.shape.as_list() == [None, None, None, 64]                               # Here the output should be (None, 62, 62, 64)
+        decodification = layers.Conv2DTranspose(3, (3,3), strides=(1,1), padding="valid", activation="sigmoid")(x)
+        #decodification = layers.Conv2D(Config.NUM_CHANNELS, (3,3), strides=(1,1), padding="valid", activation="sigmoid")(x)
         assert decodification.shape.as_list() == [None, None, None, Config.NUM_CHANNELS] # Here the output should be (None, 64, 64, 3)
         
-        self.decoder = tf.keras.Model(decoder_input_layer, decodification)
-        print("DECODER")
-        print(self.decoder.summary())
+        return tf.keras.Model(decoder_input_layer, decodification, name = "decoder_model")
 
