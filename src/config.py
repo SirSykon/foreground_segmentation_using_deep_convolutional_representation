@@ -1,11 +1,12 @@
 
 class Config:
-    TRAINING = True                                                                                                     # Configuration for training.
+    TRAINING = False                                                                                                     # Configuration for training.
 
     TRAINING_DATASET_PATH = "/usr/share/Data1/Datasets/COCO-dataset/images/train2017"                                   # Training dataset folder path.
-    TEST_DATASET_PATH = "/home/jorgegarcia/Documents/experiments/data/avenue/testing/frames"                            # Test dataset folder path.
+    TEST_DATASET_PATH = "/usr/share/Data1/Datasets/changeDetection"                                                     # Test dataset folder path.
     
     MAIN_OUTPUT_FOLDER = "../output/segment1/"                                                                          # Main output folder to save all data.
+    SEGMENTATION_OUTPUT_FOLDER = MAIN_OUTPUT_FOLDER + "segmentation/"
     TRAINING_OUTPUT_SUBFOLDER = "training_output_subfolder/"                                                            # Subfolder to save training output debugging data.
     TRAINING_OUTPUT_SUBFOLDER_PATH = MAIN_OUTPUT_FOLDER + TRAINING_OUTPUT_SUBFOLDER                                     # Subfolder to save testing output debugging data.
     TESTING_OUTPUT_SUBFOLDER = "testing_output_subfolder/"                                                              # Subfolder to save testing output debugging data.
