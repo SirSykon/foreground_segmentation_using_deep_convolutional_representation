@@ -15,7 +15,15 @@ GPU_utils.tensorflow_2_x_dark_magic_to_restrict_memory_use(Config.GPU_TO_USE)
 
 autoencoder = Autoencoder.Convolutional_Autoencoder(Config.MODEL_FOLDER_PATH, load = True)
 
-def video_segmentation(video_images):
+def video_segmentation(video_images, num_training_images):
 
-    
-video_frame_list
+    for index, image in enumerate(video_images):
+        
+        if index < num_training_images:             # background training
+        
+        
+        else:                                       # foreground segmentation
+        
+        
+       
+
