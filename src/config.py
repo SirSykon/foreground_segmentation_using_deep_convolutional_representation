@@ -31,5 +31,5 @@ class Config:
     NUM_CHANNELS = 3                                                                                                    # Number of channels.
     TRAINING_DATA_SIZE = 400000                                                                                         # How many instances should we get to train the autoencoder?
     TRAINING_DATA_PER_FILE = 10000                                                                                      # Ho many isntances should we introduce in each file?
-    GPU_TO_USE = 1                                                                                                      # GPU to use.
+    GPU_TO_USE = 0                                                                                                      # GPU to use.
     VALIDATION_DATA_SPLIT_FOR_NETWORK_TRAINING = 0.2                                                                    # Validation split to use during network training.

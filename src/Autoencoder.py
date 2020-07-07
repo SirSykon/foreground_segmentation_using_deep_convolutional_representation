@@ -6,6 +6,7 @@ import math
 from glob import glob
 import tensorflow as tf
 import tensorflow.keras.layers as layers
+import tensorflow.keras as keras
 from config import Config
 
 """
@@ -99,7 +100,7 @@ class Autoencoder(tf.keras.Model):
     """
     Method to predict using the encoder model.
         patches : list
-            List of numpy arrays to serve as input. Their shape should be self.input_shape
+            List of numpy arrays to serve as input.
         ---
         returns : list
             List of predictions.
@@ -110,7 +111,7 @@ class Autoencoder(tf.keras.Model):
     """
     Method to predict using the decoder model.
         patches : list
-            List of numpy arrays to serve as input. Their shape should be self.input_shape
+            List of numpy arrays to serve as input.
         ---
         returns : list
             List of predictions.
@@ -121,7 +122,7 @@ class Autoencoder(tf.keras.Model):
     """
     Method to predict using the autoencoder model.
         patches : list
-            List of numpy arrays to serve as input. Their shape should be self.input_shape
+            List of numpy arrays to serve as input.
         ---
         returns : list
             List of predictions.
@@ -155,9 +156,9 @@ class Convolutional_Autoencoder(Autoencoder):
     """
     def define_encoder(self):
         encoder_input_layer = layers.Input(shape=(None, None, Config.NUM_CHANNELS))     # We define the input with no defined height(H) and width(W). We wil guess the input is (None,64,64,3)
-        x = layers.Conv2D(64, (3,3), strides=(1,1), padding="valid", activation=tf.keras.layers.LeakyReLU())(encoder_input_layer)
+        x = layers.Conv2D(64, (3,3), strides=(1,1), padding="valid", activation="relu")(encoder_input_layer)
         assert x.shape.as_list() == [None, None, None, 64]                              # Here the output should be (None, 62, 62, 64)
-        x = layers.Conv2D(32, (3,3), strides=(1,1), padding="valid", activation=tf.keras.layers.LeakyReLU())(x)
+        x = layers.Conv2D(32, (3,3), strides=(1,1), padding="valid", activation="relu")(x)
         assert x.shape.as_list() == [None, None, None, 32]                              # Here the output should be (None, 60, 60, 32)
         codification = layers.Conv2D(16, (3,3), strides=(1,1), padding="valid", activation="sigmoid")(x)
         assert codification.shape.as_list() == [None, None, None, 16]                   # Here the output should be (None, 58, 58, 16)
@@ -169,9 +170,9 @@ class Convolutional_Autoencoder(Autoencoder):
     """
     def define_decoder(self):
         decoder_input_layer = layers.Input(shape=self.encoder.output_shape[1:])
-        x = layers.Conv2DTranspose(32, (3,3), strides=(1,1), padding="valid", activation=tf.keras.layers.LeakyReLU())(decoder_input_layer)
+        x = layers.Conv2DTranspose(32, (3,3), strides=(1,1), padding="valid", activation="relu")(decoder_input_layer)
         assert x.shape.as_list() == [None, None, None, 32]                               # Here the output should be (None, 60, 60, 32)
-        x = layers.Conv2DTranspose(64, (3,3), strides=(1,1), padding="valid", activation=tf.keras.layers.LeakyReLU())(x)
+        x = layers.Conv2DTranspose(64, (3,3), strides=(1,1), padding="valid", activation="relu")(x)
         assert x.shape.as_list() == [None, None, None, 64]                               # Here the output should be (None, 62, 62, 64)
         decodification = layers.Conv2DTranspose(3, (3,3), strides=(1,1), padding="valid", activation="sigmoid")(x)
         #decodification = layers.Conv2D(Config.NUM_CHANNELS, (3,3), strides=(1,1), padding="valid", activation="sigmoid")(x)
