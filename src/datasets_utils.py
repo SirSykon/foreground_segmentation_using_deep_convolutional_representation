@@ -39,7 +39,7 @@ Outputs:
     cateogires_and_videos_list : list -> A list with structure [(category_name, video_name)].
 """
 
-def get_change_detection_categories_and_videos_list(dataset_path = None):
+def get_change_detection_categories_and_videos_list(dataset_path = None, filter_value = None):
 
     if dataset_path is None:                                                            # If dataset_path is None, we set it as default.
         dataset_path = "/usr/share/Data1/Datasets/changeDetection"
@@ -53,7 +53,8 @@ def get_change_detection_categories_and_videos_list(dataset_path = None):
         videos_in_category_path = glob(os.path.join(category_path, "*"))                # We get the videos in category path.
         for video_in_category in videos_in_category_path:                               # For each video in category path...
             _, video_name = os.path.split(video_in_category)                            # We get the video name
-            categories_and_videos_list.append((category_name, video_name))              # We add the tuple to the list.
+            if filter_value is None or category_name==filter_value or video_name==filter_value:
+                categories_and_videos_list.append((category_name, video_name))              # We add the tuple to the list.
             
     return categories_and_videos_list                                                   # We return the data
         

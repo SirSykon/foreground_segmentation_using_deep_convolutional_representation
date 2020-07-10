@@ -60,7 +60,7 @@ reconstruction_loss = tf.keras.losses.MeanSquaredError()    # We define the reco
 Function to create a convolutional autoencoder model
 """
 def make_convolutional_autoencoder_model():
-    return Autoencoder.Convolutional_Autoencoder(Config.MODEL_FOLDER_PATH, load = False)
+    return Autoencoder.Convolutional_Autoencoder2(Config.MODEL_FOLDER_PATH, load = False)
 
 """
 Function to execute a train step.
