@@ -203,7 +203,7 @@ def video_segmentation(video_images_paths, num_training_images, autoencoder, vid
                 print("NaN detected")               
                 quit()
                 
-            resized_segmented_image = cv2.resize(segmented_image.numpy()*255., (image.shape[0], image.shape[1]))
+            resized_segmented_image = cv2.resize(segmented_image.numpy()*255., (image.shape[0], image.shape[1]))    # We resize the segmented image to ensure it has the same size as the original image.
             
             cv2.imwrite(segmented_image_path, segmented_image.numpy()*255.)             # We save the segmented image.
         
@@ -211,14 +211,13 @@ def video_segmentation(video_images_paths, num_training_images, autoencoder, vid
         
     return np.array(processing_time)
 
-
 """
 GENERAL INITIALIZATION
 """
 
 GPU_utils.tensorflow_2_x_dark_magic_to_restrict_memory_use(Config.GPU_TO_USE)
 
-autoencoder = Autoencoder.Convolutional_Autoencoder(Config.MODEL_FOLDER_PATH, load = True)
+autoencoder = Autoencoder.Convolutional_Autoencoder2(Config.MODEL_FOLDER_PATH, load = True)
 
 dataset_path = Config.TEST_DATASET_PATH
 

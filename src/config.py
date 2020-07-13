@@ -6,7 +6,7 @@ class Config:
     TEST_DATASET_PATH = "/usr/share/Data1/Datasets/changeDetection"                                                     # Test dataset folder path.
     
     MAIN_OUTPUT_FOLDER = "../output/segment1/"                                                                          # Main output folder to save all data.
-    SEGMENTATION_OUTPUT_FOLDER = MAIN_OUTPUT_FOLDER + "segmentation2/"
+    SEGMENTATION_OUTPUT_FOLDER = MAIN_OUTPUT_FOLDER + "segmentation3/"
     TRAINING_OUTPUT_SUBFOLDER = "training_output_subfolder/"                                                            # Subfolder to save training output debugging data.
     TRAINING_OUTPUT_SUBFOLDER_PATH = MAIN_OUTPUT_FOLDER + TRAINING_OUTPUT_SUBFOLDER                                     # Subfolder to save testing output debugging data.
     TESTING_OUTPUT_SUBFOLDER = "testing_output_subfolder/"                                                              # Subfolder to save testing output debugging data.
@@ -20,7 +20,7 @@ class Config:
         
     NETWORK_TRAINING_DATA_PATH = MAIN_OUTPUT_FOLDER + "network_training_data/"                                          # Path to network training data.
     NETWORK_TRAINING_DATA_FILES_NAME_STRUCTURE = "training_data_file_{}.npy"
-    NETWORK_MODEL_NAME = "fully_convolutional2"                                                                          # Network model name.
+    NETWORK_MODEL_NAME = "fully_convolutional3"                                                                          # Network model name.
     MODELS_FOLDER = MAIN_OUTPUT_FOLDER + "models/"                                                                      # Path to models folder.
     MODEL_FOLDER_PATH = MODELS_FOLDER+NETWORK_MODEL_NAME+"/"                                                            # Path to network model folder.
     
