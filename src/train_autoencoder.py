@@ -60,7 +60,7 @@ reconstruction_loss = tf.keras.losses.MeanSquaredError()    # We define the reco
 Function to create a convolutional autoencoder model
 """
 def make_convolutional_autoencoder_model():
-    return Autoencoder.Convolutional_Autoencoder3(Config.MODEL_FOLDER_PATH, load = False)
+    return Autoencoder.Convolutional_Autoencoder2(Config.MODEL_FOLDER_PATH, load = False)
 
 """
 Function to execute a train step.
@@ -149,7 +149,7 @@ basic_training_data_generator = data_utils.data_generator(
 autoencoder_training_generator = data_utils.autoencoder_data_generator(
     basic_training_data_generator, 
     preprocessing_function = normalize_data, 
-    x_preprocessing_function = None,
+    x_preprocessing_function = data_utils.add_gaussian_noise,
     y_preprocessing_function = None)
 
 basic_validation_data_generator = data_utils.data_generator(
@@ -159,7 +159,7 @@ basic_validation_data_generator = data_utils.data_generator(
 autoencoder_validation_generator = data_utils.autoencoder_data_generator(
     basic_validation_data_generator, 
     preprocessing_function = normalize_data,
-    x_preprocessing_function = None,
+    x_preprocessing_function = data_utils.add_gaussian_noise,
     y_preprocessing_function = None)
 
 autoencoder_optimizer = tf.keras.optimizers.Adam(1e-3)

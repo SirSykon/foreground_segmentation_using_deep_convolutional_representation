@@ -119,3 +119,25 @@ def autoencoder_data_generator(source_generator, preprocessing_function = None, 
             
         yield (x_data, y_data)                         # We return both x and y batches.
         
+"""
+NOISES FUNCTIONS
+"""
+
+"""
+This function returns a matrix modified by gaussian noise.
+inputs:
+    matrix : numpy matrix -> A matrix to add gaussian noise.
+    gaussian_noise_mean : int -> Gaussian noise mean.
+    gaussian_noise_standard_desviation : float -> Gaussian noise standard desviation.
+    min_value : int -> minimum value in the output matrix.
+    max_value : int maximum value in the output matrix.
+
+outputs:
+    clipped_noise_added_matrix : numpy matrix -> Matrix output from adding gaussian noise to input matrix but ensuring no value lower than min_value and no value greater than max_value.
+"""
+def add_gaussian_noise(matrix, gaussian_noise_mean = 0, gaussian_noise_standard_desviation = 0.2, min_value = 0, max_value = 1):
+    gaussian_matrix = np.random.normal(loc = gaussian_noise_mean, scale = gaussian_noise_standard_desviation, size = matrix.shape)
+    noise_added_matrix = matrix + gaussian_matrix
+    clipped_noise_added_matrix = np.clip(noise_added_matrix, min_value, max_value)
+    return clipped_noise_added_matrix
+        
