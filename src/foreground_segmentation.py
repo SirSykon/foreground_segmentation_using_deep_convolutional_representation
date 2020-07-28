@@ -53,7 +53,7 @@ def welford_finalize(existingAggregate):
     if count < 2:
         return (mean, tf.zeros(shape=mean.shape, dtype=tf.float64), tf.zeros(shape=mean.shape, dtype=tf.float64))       # We return values to evade tensorflow error but should not happen.
     else:
-       (mean, variance, sampleVariance) = (mean, M2 / count, M2 / (count - 1)) 
+       (mean, variance, sampleVariance) = (mean, M2 / count, M2 / (count - 1))                                          # We get the values online calculated.
        return (mean, variance, sampleVariance)
 
 """
@@ -66,17 +66,19 @@ def welford_algorithm(image, autoencoder, existingAggregate, finalize):
         return mean, variance, sampleVariance
                    
     else:                                                                           # We do not finalize.
-        encoded_image = autoencoder.encode(tf.expand_dims(image,0))[0]
-        encoded_image = tf.cast(encoded_image, tf.float64)
+        encoded_image = autoencoder.encode(tf.expand_dims(image,0))[0]              # We get the encoded image.
+        encoded_image = tf.cast(encoded_image, tf.float64)                          # We ensure is a tf double tensor.
         existingAggregate = welford_update(existingAggregate, encoded_image)        # We update Welford's online algorihtm.
         return existingAggregate
 
 """
+Function to segmentate image.
 """
 #@tf.function
 def segmentate_image(image, autoencoder, background_model, vol_h = 1, L = 16, alpha = 0.001, pi_Fore = 0.5, pi_Back = 0.5, min_var = 0.001):
     v = autoencoder.encode(tf.expand_dims(image,0))[0]                                                                                  # We encode the image.
-    v = tf.cast(v, tf.float64)
+    assert L == v.shape[-1]                                                                                                             # We ensure L is the same as the channel depth.
+    v = tf.cast(v, tf.float64)                                                                                                          # We ensure is a tf double tensor.
     (mean, var) = background_model                                                                                                      # We get the background model.
     #print("mean")
     #print(mean.shape)

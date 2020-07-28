@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 """
 Function to perform the comparison between a segmented image and a groundtruth. We gess both are grayscale images with channels between 0. and 255.
@@ -76,8 +77,8 @@ def compare_gt_and_img(img, gt, img_negative_threshold = 0., img_positive_thresh
 """
 Function to get statistics from foreground segmentation video compared to groundtruth.
     inputs:
-        img_path_structure : str -> string with the image path structure. For example: /some/path/img_structure_*.png
-        gt_path_structure : str -> string with the groundtruth path structure. For example: /some/path/gt_structure_*.png
+        img_path_structure : str -> string with the image path structure. For example: /some/path/seg_img_{:0>6}.png
+        gt_path_structure : str -> string with the groundtruth path structure. For example: /some/path/gt_structure_{:0>6}.png
         temporal_roi_start : int -> The number of the first image within temporal roi.
         temporal_roi_end : int -> The number of the last image within temporal roi.
 """

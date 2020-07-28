@@ -30,6 +30,28 @@ def get_original_change_detection_data(video_to_get_name):
                 list_images = sorted(glob(os.path.join(video_in_category,"input","*.jpg")))     # We get the list of images paths.
                 
                 return list_images, initial_roi_frame, last_roi_frame                           # We return the data
+                
+"""
+Function to get ground truth images from change detection video given its name,
+Inputs:
+    video_name_to_get_gt : str -> video name to get gt from.
+Outputs:
+    list_images : list -> List of images from chosen video.
+"""
+
+def get_original_change_detection_gt_data(video_name_to_get_gt):
+    dataset_path = "/usr/share/Data1/Datasets/changeDetection"                                  # We use default dataset position.
+    
+    categories_path = glob(os.path.join(dataset_path,"*"))                                      # We get categories path.
+    for category_path in categories_path:                                                       # For each category...
+        videos_in_category_path = glob(os.path.join(category_path, "*"))                        # We get the videos in category path.
+        for video_in_category in videos_in_category_path:                                       # For each video in category path...
+            _, video_name = os.path.split(video_in_category)                                    # We get the video name
+            if video_name == video_to_get_name :                                                # If video name is equal to the video name we are looking for,
+                    
+                list_images = sorted(glob(os.path.join(video_in_category,"groundtruth","*.png")))     # We get the list of images paths.
+                
+                return list_images                                                              # We return the data
 
 """
 Function to get the list of changedetection videos in dataset_path.
@@ -54,7 +76,7 @@ def get_change_detection_categories_and_videos_list(dataset_path = None, filter_
         for video_in_category in videos_in_category_path:                               # For each video in category path...
             _, video_name = os.path.split(video_in_category)                            # We get the video name
             if filter_value is None or category_name==filter_value or video_name==filter_value:
-                categories_and_videos_list.append((category_name, video_name))              # We add the tuple to the list.
+                categories_and_videos_list.append((category_name, video_name))          # We add the tuple to the list.
             
     return categories_and_videos_list                                                   # We return the data
         

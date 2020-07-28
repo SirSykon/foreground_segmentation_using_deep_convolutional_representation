@@ -8,6 +8,7 @@ import tensorflow as tf
 import tensorflow.keras.layers as layers
 import tensorflow.keras as keras
 from config import Config
+from contextlib import redirect_stdout
 
 """
 Class to define and use an autoencoder model and its parts.
@@ -36,13 +37,26 @@ class Autoencoder(tf.keras.Model):
             self.encoder = self.define_encoder()
             print("Encoder defined")
             self.encoder.summary()
+            
+            with open(os.path.join(self.models_path,'encoder.txt'), 'w') as f:
+                with redirect_stdout(f):
+                    self.encoder.summary()
+                    
             self.decoder = self.define_decoder()
             print("Decoder defined")
             self.decoder.summary()
             
+            with open(os.path.join(self.models_path,'decoder.txt'), 'a') as f:
+                with redirect_stdout(f):
+                    self.decoder.summary()
+            
         self.autoencoder = self.define_autoencoder()
         print("Autoencoder defined")
         self.autoencoder.summary()
+        
+        with open(os.path.join(self.models_path,'autoencoder.txt'), 'a') as f:
+                with redirect_stdout(f):
+                    self.autoencoder.summary()
         
     """
     Method use the autoencoder.
@@ -149,7 +163,7 @@ class Autoencoder(tf.keras.Model):
             decoder_json_file.write(decoder_json)
         self.decoder.save_weights(decoder_path)
         
-class Convolutional_Autoencoder(Autoencoder):
+class Convolutional_Autoencoder_2_encoding_decoding_layers_3x3_filters(Autoencoder):
 
     """
     Method to define the encoder model.
@@ -158,18 +172,8 @@ class Convolutional_Autoencoder(Autoencoder):
         encoder_input_layer = layers.Input(shape=(None, None, Config.NUM_CHANNELS))     # We define the input with no defined height(H) and width(W). We wil guess the input is (None,64,64,3)
         x = layers.Conv2D(64, (3,3), strides=(1,1), padding="valid", activation="relu")(encoder_input_layer)
         assert x.shape.as_list() == [None, None, None, 64]                              # Here the output should be (None, 62, 62, 64)
-        x = layers.Conv2D(64, (3,3), strides=(1,1), padding="valid", activation="relu")(x)
-        assert x.shape.as_list() == [None, None, None, 64]                              # Here the output should be (None, 60, 60, 64)
-        x = layers.Conv2D(64, (3,3), strides=(1,1), padding="valid", activation="relu")(x)
-        assert x.shape.as_list() == [None, None, None, 64]                              # Here the output should be (None, 58, 58, 64)
-        x = layers.Conv2D(32, (3,3), strides=(1,1), padding="valid", activation="relu")(x)
-        assert x.shape.as_list() == [None, None, None, 32]                              # Here the output should be (None, 56, 66, 32)
-        x = layers.Conv2D(32, (3,3), strides=(1,1), padding="valid", activation="relu")(x)
-        assert x.shape.as_list() == [None, None, None, 32]                              # Here the output should be (None, 54, 64, 32)
-        x = layers.Conv2D(32, (3,3), strides=(1,1), padding="valid", activation="relu")(x)
-        assert x.shape.as_list() == [None, None, None, 32]                              # Here the output should be (None, 52, 52, 32)
         codification = layers.Conv2D(16, (3,3), strides=(1,1), padding="valid", activation="sigmoid")(x)
-        assert codification.shape.as_list() == [None, None, None, 16]                   # Here the output should be (None, 50, 50, 16)
+        assert codification.shape.as_list() == [None, None, None, 16]                   # Here the output should be (None, 60, 60, 16)
         
         return tf.keras.Model(encoder_input_layer, codification, name = "encoder_model")
 
@@ -179,19 +183,64 @@ class Convolutional_Autoencoder(Autoencoder):
     def define_decoder(self):
         decoder_input_layer = layers.Input(shape=self.encoder.output_shape[1:])
         x = layers.Conv2DTranspose(32, (3,3), strides=(1,1), padding="valid", activation="relu")(decoder_input_layer)
-        assert x.shape.as_list() == [None, None, None, 32]                               # Here the output should be (None, 52, 52, 32)
-        x = layers.Conv2DTranspose(32, (3,3), strides=(1,1), padding="valid", activation="relu")(x)
-        assert x.shape.as_list() == [None, None, None, 32]                               # Here the output should be (None, 54, 54, 32)
-        x = layers.Conv2DTranspose(32, (3,3), strides=(1,1), padding="valid", activation="relu")(x)
-        assert x.shape.as_list() == [None, None, None, 32]                               # Here the output should be (None, 56, 656 32)
-        x = layers.Conv2DTranspose(64, (3,3), strides=(1,1), padding="valid", activation="relu")(x)
-        assert x.shape.as_list() == [None, None, None, 64]                               # Here the output should be (None, 58, 58, 64)
-        x = layers.Conv2DTranspose(64, (3,3), strides=(1,1), padding="valid", activation="relu")(x)
-        assert x.shape.as_list() == [None, None, None, 64]                               # Here the output should be (None, 60, 60, 64)
+        assert x.shape.as_list() == [None, None, None, 32]                               # Here the output should be (None, 62, 62, 64)
+        decodification = layers.Conv2DTranspose(Config.NUM_CHANNELS, (3,3), strides=(1,1), padding="valid", activation="sigmoid")(x)
+        assert decodification.shape.as_list() == [None, None, None, Config.NUM_CHANNELS] # Here the output should be (None, 64, 64, 3)
+        
+        return tf.keras.Model(decoder_input_layer, decodification, name = "decoder_model")
+        
+class Convolutional_Autoencoder_2_encoding_decoding_layers_5x5_filters(Autoencoder):
+
+    """
+    Method to define the encoder model.
+    """
+    def define_encoder(self):
+        encoder_input_layer = layers.Input(shape=(None, None, Config.NUM_CHANNELS))     # We define the input with no defined height(H) and width(W). We wil guess the input is (None,64,64,3)
+        x = layers.Conv2D(64, (5,5), strides=(1,1), padding="valid", activation="relu")(encoder_input_layer)
+        assert x.shape.as_list() == [None, None, None, 64]                              # Here the output should be (None, 62, 62, 64)
+        codification = layers.Conv2D(16, (5,5), strides=(1,1), padding="valid", activation="sigmoid")(x)
+        assert codification.shape.as_list() == [None, None, None, 16]                   # Here the output should be (None, 60, 60, 16)
+        
+        return tf.keras.Model(encoder_input_layer, codification, name = "encoder_model")
+
+    """
+    Method to define the decoder model.
+    """
+    def define_decoder(self):
+        decoder_input_layer = layers.Input(shape=self.encoder.output_shape[1:])
+        x = layers.Conv2DTranspose(32, (5,5), strides=(1,1), padding="valid", activation="relu")(decoder_input_layer)
+        assert x.shape.as_list() == [None, None, None, 32]                               # Here the output should be (None, 62, 62, 64)
+        decodification = layers.Conv2DTranspose(Config.NUM_CHANNELS, (5,5), strides=(1,1), padding="valid", activation="sigmoid")(x)
+        assert decodification.shape.as_list() == [None, None, None, Config.NUM_CHANNELS] # Here the output should be (None, 64, 64, 3)
+        
+        return tf.keras.Model(decoder_input_layer, decodification, name = "decoder_model")
+        
+class Convolutional_Autoencoder_3_encoding_decoding_layers_3x3_filters(Autoencoder):
+
+    """
+    Method to define the encoder model.
+    """
+    def define_encoder(self):
+        encoder_input_layer = layers.Input(shape=(None, None, Config.NUM_CHANNELS))     # We define the input with no defined height(H) and width(W). We wil guess the input is (None,64,64,3)
+        x = layers.Conv2D(64, (3,3), strides=(1,1), padding="valid", activation="relu")(encoder_input_layer)
+        assert x.shape.as_list() == [None, None, None, 64]                              # Here the output should be (None, 62, 62, 64)
+        x = layers.Conv2D(32, (3,3), strides=(1,1), padding="valid", activation="relu")(x)
+        assert x.shape.as_list() == [None, None, None, 32]                              # Here the output should be (None, 60, 60, 32)
+        codification = layers.Conv2D(16, (3,3), strides=(1,1), padding="valid", activation="sigmoid")(x)
+        assert codification.shape.as_list() == [None, None, None, 16]                   # Here the output should be (None, 58, 58, 16)
+        
+        return tf.keras.Model(encoder_input_layer, codification, name = "encoder_model")
+
+    """
+    Method to define the decoder model.
+    """
+    def define_decoder(self):
+        decoder_input_layer = layers.Input(shape=self.encoder.output_shape[1:])
+        x = layers.Conv2DTranspose(32, (3,3), strides=(1,1), padding="valid", activation="relu")(decoder_input_layer)
+        assert x.shape.as_list() == [None, None, None, 32]                               # Here the output should be (None, 60, 60, 32)
         x = layers.Conv2DTranspose(64, (3,3), strides=(1,1), padding="valid", activation="relu")(x)
         assert x.shape.as_list() == [None, None, None, 64]                               # Here the output should be (None, 62, 62, 64)
-        decodification = layers.Conv2DTranspose(3, (3,3), strides=(1,1), padding="valid", activation="sigmoid")(x)
-        #decodification = layers.Conv2D(Config.NUM_CHANNELS, (3,3), strides=(1,1), padding="valid", activation="sigmoid")(x)
+        decodification = layers.Conv2DTranspose(Config.NUM_CHANNELS, (3,3), strides=(1,1), padding="valid", activation="sigmoid")(x)
         assert decodification.shape.as_list() == [None, None, None, Config.NUM_CHANNELS] # Here the output should be (None, 64, 64, 3)
         
         return tf.keras.Model(decoder_input_layer, decodification, name = "decoder_model")

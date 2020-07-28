@@ -10,6 +10,7 @@ from config import Config
 import GPU_utils as GPU_utils               # pylint: disable=no-name-in-module
 import data_utils                           # pylint: disable=no-name-in-module
 import Autoencoder
+from contextlib import redirect_stdout
 
 GPU_utils.tensorflow_2_x_dark_magic_to_restrict_memory_use(Config.GPU_TO_USE)
 
@@ -54,13 +55,13 @@ def denormalize_data(data, normalization_range=(0,1)):
         assert np.min(data) >= -1.
         return (data + 1)*127.5
 
-reconstruction_loss = tf.keras.losses.MeanSquaredError()    # We define the reconstruction loss function.
+reconstruction_loss = tf.keras.losses.MeanAbsoluteError()    # We define the reconstruction loss function.
 
 """
 Function to create a convolutional autoencoder model
 """
 def make_convolutional_autoencoder_model():
-    return Autoencoder.Convolutional_Autoencoder2(Config.MODEL_FOLDER_PATH, load = False)
+    return Autoencoder.Convolutional_Autoencoder_2_encoding_decoding_layers_5x5_filters(Config.MODEL_FOLDER_PATH, load = False)
 
 """
 Function to execute a train step.
@@ -126,7 +127,14 @@ def train(training_dataset_generator, validation_dataset_generator, autoencoder,
             checkpoint.save(file_prefix = checkpoint_prefix)
 
         print('Time for epoch {} is {} sec with average training loss {} after {} training steps and average validation loss {} after {} validation steps.'.format(epoch + 1, time.time()-start, np.mean(training_loss_vector), training_steps_per_epoch, np.mean(validation_loss_vector), validation_steps_per_epoch))
-
+        
+        autoencoder.save()
+        with open(os.path.join(Config.MODEL_FOLDER_PATH,'history.txt'), 'a') as f:
+                with redirect_stdout(f):
+                    print('Time for epoch {} is {} sec with average training loss {} after {} training steps and average validation loss {} after {} validation steps.'.format(epoch + 1, time.time()-start, np.mean(training_loss_vector), training_steps_per_epoch, np.mean(validation_loss_vector), validation_steps_per_epoch))
+                    
+                    
+        """
         if not visual_test_clip is None:
             print("Saving test clip.")
             print("Visual test shape: {}".format(visual_test_clip.shape))
@@ -135,6 +143,8 @@ def train(training_dataset_generator, validation_dataset_generator, autoencoder,
             image_utils.print_image((prediction[0]+1)*127.5, os.path.join(Config.MAIN_OUTPUT_FOLDER, "testAutoencoder0"), image_preffix="reconstructed_image_{}".format(epoch+1))
             print("Reconstruction loss: {}".format(reconstruction_loss(np.expand_dims(visual_test_clip, axis=0), prediction)))
             #print("Discriminator: {}".format(discriminator(prediction)))
+            
+        """
 
 data_files_paths = glob(os.path.join(Config.NETWORK_TRAINING_DATA_PATH, "*"))
 random.shuffle(data_files_paths)
