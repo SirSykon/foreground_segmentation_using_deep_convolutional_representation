@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import cv2
 
 """
 Function to perform the comparison between a segmented image and a groundtruth. We gess both are grayscale images with channels between 0. and 255.
@@ -14,7 +15,7 @@ Function to perform the comparison between a segmented image and a groundtruth. 
         tuple with TP, TN, FP, FN
 """
 
-def compare_gt_and_img(img, gt, img_negative_threshold = 0., img_positive_threshold = 255.,  gt_negative_threshold = 0., gt_positive_threshold = 255.):
+def compare_gt_and_img(img, gt, img_negative_threshold = 127., img_positive_threshold = 128.,  gt_negative_threshold = 0., gt_positive_threshold = 255.):
 
     assert len(img.shape) < 4
     assert len(img.shape) > 1
@@ -24,7 +25,7 @@ def compare_gt_and_img(img, gt, img_negative_threshold = 0., img_positive_thresh
     else:
         img_to_use = img.copy()
         
-    print(img_to_use)
+    #print(img_to_use)
     assert len(gt.shape) < 4
     assert len(gt.shape) > 1
 
@@ -32,40 +33,42 @@ def compare_gt_and_img(img, gt, img_negative_threshold = 0., img_positive_thresh
         gt_to_use = gt[:,:,0]
     else:
         gt_to_use = gt.copy() 
-        
-    print(gt_to_use)
+    
+    print(gt.shape)
+    print(img.shape)
+    #print(gt_to_use)
     assert img.shape == gt.shape
 
     img_negative = img_to_use <= img_negative_threshold
-    print("img_negative")
-    print(img_negative)
+    #print("img_negative")
+    #print(img_negative)
     img_positive = img_to_use >= img_positive_threshold
-    print("img_positive")
-    print(img_positive)
+    #print("img_positive")
+    #print(img_positive)
 
     gt_negative = gt_to_use <= gt_negative_threshold
-    print("gt_negative")
-    print(gt_negative)
+    #print("gt_negative")
+    #print(gt_negative)
     gt_positive = gt_to_use >= gt_positive_threshold
-    print("gt_positive")
-    print(gt_positive)
+    #print("gt_positive")
+    #print(gt_positive)
 
     TP_mask = np.logical_and(img_positive, gt_positive)*1.
     TN_mask = np.logical_and(img_negative, gt_negative)*1.
     FP_mask = np.logical_and(img_positive, gt_negative)*1.
     FN_mask = np.logical_and(img_negative, gt_positive)*1.
 
-    print("TP mask")
-    print(TP_mask)
+    #print("TP mask")
+    #print(TP_mask)
 
-    print("TN mask")
-    print(TN_mask)
+    #print("TN mask")
+    #print(TN_mask)
 
-    print("FP_mask")
-    print(FP_mask)
+    #print("FP_mask")
+    #print(FP_mask)
 
-    print("FN_mask")
-    print(FN_mask)
+    #print("FN_mask")
+    #print(FN_mask)
 
     TP = np.sum(TP_mask)
     TN = np.sum(TN_mask)
@@ -95,7 +98,7 @@ def compare_video(img_path_structure, gt_path_structure, temporal_roi_start, tem
         img = cv2.imread(img_path)
         gt = cv2.imread(gt_path)
         
-        TP, TN, FP, FN = compare_video(img, gt)
+        TP, TN, FP, FN = compare_gt_and_img(img, gt)
         
         video_statistics.append(np.array([TP, TN, FP, FN]))
         

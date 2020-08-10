@@ -57,6 +57,7 @@ def welford_finalize(existingAggregate):
        return (mean, variance, sampleVariance)
 
 """
+Function to apply Weldfor algorithm.
 """
 @tf.function
 def welford_algorithm(image, autoencoder, existingAggregate, finalize):
@@ -157,16 +158,16 @@ def segmentate_image(image, autoencoder, background_model, vol_h = 1, L = 16, al
 """
 
 """
-def video_segmentation(video_images_paths, num_training_images, autoencoder, video_name, category, min_var = 0.001):
+def video_segmentation(video_images_paths, num_training_images, autoencoder, segmentation_folder, min_var = 0.001):
     existingAggregate = None
     background_model = None
     processing_time = []
     for index, video_image_path in enumerate(video_images_paths):
         start_time = time.time()
         image = cv2.imread(video_image_path)/255.
-        print(video_image_path)
+        print("Video image path: {}".format(video_image_path))
         _, image_name = os.path.split(video_image_path)
-        print(image_name)
+        print("Image name: {}".format(image_name))
         
         training = index < num_training_images
                 
@@ -185,7 +186,7 @@ def video_segmentation(video_images_paths, num_training_images, autoencoder, vid
                                                     existingAggregate, 
                                                     finalize_welford_algorithm)         # We will finalize Welford's online algorithm
                                                     
-                variance = corrected_var = tf.clip_by_value(variance, clip_value_min=min_var, clip_value_max = np.inf)   # We ensure that var is min_var as minimum. 
+                variance = tf.clip_by_value(variance, clip_value_min=min_var, clip_value_max = np.inf)   # We ensure that var is min_var as minimum. 
                 background_model = (mean, variance)           
                 #print(mean.numpy())
                 #print(variance.numpy())
@@ -195,19 +196,15 @@ def video_segmentation(video_images_paths, num_training_images, autoencoder, vid
                                                                     background_model,
                                                                     min_var = min_var)   # We get the segmented image and the updated background model.
             #print(segmented_image.numpy())
-            segmented_image_path = os.path.join(Config.SEGMENTATION_OUTPUT_FOLDER, 
-                                                    category, 
-                                                    video_name, 
+            segmented_image_path = os.path.join(segmentation_folder, 
                                                     "seg{:0>6}.png".format(index+1))    # We generate the new segmented image path.
-            print(segmented_image_path)
+            print("Output image path: {}".format(segmented_image_path))
             #print(np.max(segmented_image.numpy()))
-            if np.sum(np.isnan(segmented_image.numpy())) > 0:
-                print("NaN detected")               
-                quit()
+            assert np.sum(np.isnan(segmented_image.numpy())) == 0
                 
-            resized_segmented_image = cv2.resize(segmented_image.numpy()*255., (image.shape[0], image.shape[1]))    # We resize the segmented image to ensure it has the same size as the original image.
+            resized_segmented_image = cv2.resize(segmented_image.numpy()*255., (image.shape[1], image.shape[0]))    # We resize the segmented image to ensure it has the same size as the original image.
             
-            cv2.imwrite(segmented_image_path, segmented_image.numpy()*255.)             # We save the segmented image.
+            cv2.imwrite(segmented_image_path, resized_segmented_image)                   # We save the segmented image.
         
         processing_time.append(time.time()-start_time)
         
@@ -219,24 +216,30 @@ GENERAL INITIALIZATION
 
 GPU_utils.tensorflow_2_x_dark_magic_to_restrict_memory_use(Config.GPU_TO_USE)
 
-autoencoder = Autoencoder.Convolutional_Autoencoder2(Config.MODEL_FOLDER_PATH, load = True)
+autoencoder = Autoencoder.Autoencoder(Config.MODEL_FOLDER_PATH, load = True)                    # We lad a generic autoencoder defined by the model path given as argument.
 
-dataset_path = Config.TEST_DATASET_PATH
-
-for (category, video_name) in datasets_utils.get_change_detection_categories_and_videos_list(filter_value = None):
+for (noise, category, video_name) in datasets_utils.get_change_detection_noises_categories_and_videos_list(filter_value = None):
+    print(noise)
     print(category)
     print(video_name)
-    video_images_list, video_initial_roi_frame, video_last_roi_frame = datasets_utils.get_original_change_detection_data(video_name)
-    print("ROI")
-    print(video_initial_roi_frame)
-    segmentation_folder = os.path.join(Config.SEGMENTATION_OUTPUT_FOLDER, 
-                                        category, 
-                                        video_name)
-    if not os.path.isdir(segmentation_folder):
-        os.makedirs(segmentation_folder)
+    if category in Config.CATEGORIES_TO_TEST:
+        video_images_list, video_initial_roi_frame, video_last_roi_frame = datasets_utils.get_noise_change_detection_data(video_name, noise)
+        print("ROI")
+        print(video_initial_roi_frame)
+        segmentation_folder = os.path.join(Config.SEGMENTATION_OUTPUT_FOLDER, 
+                                            noise,
+                                            category, 
+                                            video_name)
 
-    processing_time = video_segmentation(video_images_list, (video_initial_roi_frame-1), autoencoder, video_name, category)
-    bck_train_processing_time = processing_time[:(video_initial_roi_frame-1)]
-    seg_img_processing_time = processing_time[(video_initial_roi_frame-1):]
-    print("Background training average time: {} with fps {}".format(np.average(bck_train_processing_time),1./np.average(bck_train_processing_time)))
-    print("Image segmentation average time: {} with fps {}".format(np.average(seg_img_processing_time),1./np.average(seg_img_processing_time)))
+        print("segmentation folder: {}.".format(segmentation_folder))
+
+        if not os.path.isdir(segmentation_folder):
+            os.makedirs(segmentation_folder)
+
+        processing_time = video_segmentation(video_images_list, (video_initial_roi_frame-1), autoencoder, segmentation_folder)
+        bck_train_processing_time = processing_time[:(video_initial_roi_frame-1)]
+        seg_img_processing_time = processing_time[(video_initial_roi_frame-1):]
+        print("Background training average time: {} with fps {}".format(np.average(bck_train_processing_time),1./np.average(bck_train_processing_time)))
+        print("Image segmentation average time: {} with fps {}".format(np.average(seg_img_processing_time),1./np.average(seg_img_processing_time)))
+    else:
+        print("We skip category {}.".format(category))
