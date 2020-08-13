@@ -9,13 +9,15 @@ class Config:
     CATEGORIES_TO_TEST = ["baseline","dynamicBackground"]
     
     MAIN_OUTPUT_FOLDER = "../output/"                                                                                   # Main output folder to save all data.
-    NETWORK_MODEL_NAME = "conv4"                                                                                        # Network model name.
+    NETWORK_MODEL_NAME = "enc1"                                                                                        # Network model name.
     SEGMENTATION_OUTPUT_FOLDER = MAIN_OUTPUT_FOLDER + "segmentation/" + NETWORK_MODEL_NAME + "/"
     TRAINING_OUTPUT_SUBFOLDER = "training_output_subfolder/"                                                            # Subfolder to save training output debugging data.
     TRAINING_OUTPUT_SUBFOLDER_PATH = MAIN_OUTPUT_FOLDER + TRAINING_OUTPUT_SUBFOLDER                                     # Subfolder to save testing output debugging data.
     TESTING_OUTPUT_SUBFOLDER = "testing_output_subfolder/"                                                              # Subfolder to save testing output debugging data.
     TESTING_OUTPUT_SUBFOLDER_PATH = MAIN_OUTPUT_FOLDER + TESTING_OUTPUT_SUBFOLDER                                       # Subfolder to save testing output debugging data.
     EVALUATION_OUTPUT_FOLDER = MAIN_OUTPUT_FOLDER + "evaluation/" + NETWORK_MODEL_NAME + "/"
+    MODELS_FOLDER = MAIN_OUTPUT_FOLDER + "models/"                                                                      # Path to models folder.
+    MODEL_FOLDER_PATH = MODELS_FOLDER+NETWORK_MODEL_NAME+"/"                                                            # Path to network model folder.
     
     AUTOENCODER_MODEL = None
     if NETWORK_MODEL_NAME == "conv1":
@@ -26,8 +28,24 @@ class Config:
         AUTOENCODER_MODEL = Autoencoder.Convolutional_Autoencoder_3_encoding_decoding_layers_3x3_filters
     if NETWORK_MODEL_NAME == "conv4":
         AUTOENCODER_MODEL = Autoencoder.Convolutional_Autoencoder_3_encoding_decoding_layers_5x5_filters
+    if NETWORK_MODEL_NAME == "conv5":
+        AUTOENCODER_MODEL = Autoencoder.Convolutional_Autoencoder_4_encoding_decoding_layers_3x3_filters
+    if NETWORK_MODEL_NAME == "conv6":
+        AUTOENCODER_MODEL = Autoencoder.Convolutional_Autoencoder_4_encoding_decoding_layers_5x5_filters
     if NETWORK_MODEL_NAME == "conv_orig":
-        AUTOENCODER_MODEL = Autoencoder.Convolutional_Autoencoder        
+        AUTOENCODER_MODEL = Autoencoder.Convolutional_Autoencoder
+    if NETWORK_MODEL_NAME == "clean_conv1":
+        AUTOENCODER_MODEL = Autoencoder.Convolutional_Autoencoder_2_encoding_decoding_layers_3x3_filters  
+    if NETWORK_MODEL_NAME == "clean_conv2":
+        AUTOENCODER_MODEL = Autoencoder.Convolutional_Autoencoder_3_encoding_decoding_layers_3x3_filters 
+    if NETWORK_MODEL_NAME == "enc1":
+        SUPPORT_MODEL_NAME = "clean_conv1"
+        SUPPORT_MODEL_FOLDER_PATH = MODELS_FOLDER+SUPPORT_MODEL_NAME+"/"                                                    # Path to network model folder.
+        ENCODER_MODEL = Autoencoder.Convolutional_Encoder_2_encoding_decoding_layers_3x3_filters
+    if NETWORK_MODEL_NAME == "enc2":
+        SUPPORT_MODEL_NAME = "clean_conv2"
+        SUPPORT_MODEL_FOLDER_PATH = MODELS_FOLDER+SUPPORT_MODEL_NAME+"/"                                                    # Path to network model folder.
+        ENCODER_MODEL = Autoencoder.Convolutional_Encoder_3_encoding_decoding_layers_3x3_filters    
     
     if TRAINING:
         NETWORK_PROCESSED_REGIONS_OUTPUT_PATH = TRAINING_OUTPUT_SUBFOLDER_PATH + NETWORK_MODEL_NAME + "/"               # Path to folder to save network processed regions. 
@@ -37,9 +55,6 @@ class Config:
         
     NETWORK_TRAINING_DATA_PATH = MAIN_OUTPUT_FOLDER + "network_training_data/"                                          # Path to network training data.
     NETWORK_TRAINING_DATA_FILES_NAME_STRUCTURE = "training_data_file_{}.npy"
-    
-    MODELS_FOLDER = MAIN_OUTPUT_FOLDER + "models/"                                                                      # Path to models folder.
-    MODEL_FOLDER_PATH = MODELS_FOLDER+NETWORK_MODEL_NAME+"/"                                                            # Path to network model folder.
     
     BATCH_SIZE = 64                                                                                                     # Network training batch size.
     EPOCHS = 20                                                                                                         # Network training epochs.

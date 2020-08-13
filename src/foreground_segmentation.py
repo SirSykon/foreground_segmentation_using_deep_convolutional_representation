@@ -59,7 +59,7 @@ def welford_finalize(existingAggregate):
 """
 Function to apply Weldfor algorithm.
 """
-@tf.function
+#@tf.function
 def welford_algorithm(image, autoencoder, existingAggregate, finalize):
 
     if finalize:                                                                    # We finalize Welford's online algorithm.
@@ -68,6 +68,7 @@ def welford_algorithm(image, autoencoder, existingAggregate, finalize):
                    
     else:                                                                           # We do not finalize.
         encoded_image = autoencoder.encode(tf.expand_dims(image,0))[0]              # We get the encoded image.
+        print(encoded_image)
         encoded_image = tf.cast(encoded_image, tf.float64)                          # We ensure is a tf double tensor.
         existingAggregate = welford_update(existingAggregate, encoded_image)        # We update Welford's online algorihtm.
         return existingAggregate
