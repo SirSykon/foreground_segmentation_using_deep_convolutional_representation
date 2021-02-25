@@ -57,7 +57,7 @@ def denormalize_data(data, normalization_range=(0,1)):
         assert np.min(data) >= -1.
         return (data + 1)*127.5
 
-reconstruction_loss = tf.keras.losses.MeanAbsoluteError()    # We define the reconstruction loss function.
+reconstruction_loss = tf.keras.losses.MeanSquaredError()    # We define the reconstruction loss function.
 
 """
 Function to create a convolutional autoencoder model

@@ -5,7 +5,7 @@ class Config:
 
     TRAINING_DATASET_PATH = "/media/sykon/Maxtor/Files/Work/datasets/COCO/images/train2017"                                   # Training dataset folder path.
     CHANGEDETECTON_DATASET_PATH = "/media/sykon/Maxtor/Files/Work/datasets/change_detection/dataset2014/dataset"        # We use default dataset position..
-    NOISE_CHANGEDETECTON_DATASET_PATH = "/usr/share/Data1/Datasets/changeDetection_noise"                               # We use default dataset position..
+    NOISE_CHANGEDETECTON_DATASET_PATH = "../output/noise_change_detection"                                              # We use default dataset position..
     CATEGORIES_TO_TEST = ["baseline","dynamicBackground"]
     
     MAIN_OUTPUT_FOLDER = "../output/"                                                                                   # Main output folder to save all data.
@@ -21,6 +21,9 @@ class Config:
 
     NETWORK_TRAINING_DATA_PATH = MAIN_OUTPUT_FOLDER + "network_training_data/"                                          # Path to network training data.
     NETWORK_TRAINING_DATA_FILES_NAME_STRUCTURE = "training_data_file_{}.npy"
+
+    NOISE = "gaussian_1"                                                                                                # Default noise to use.
+    NOISES_LIST = ["gaussian_1", "gaussian_2", "gaussian_3", "uniform_1"]                                               # List of noises to use.
     
     BATCH_SIZE = 64                                                                                                     # Network training batch size.
     EPOCHS = 20                                                                                                         # Network training epochs.
@@ -66,3 +69,24 @@ class Config:
         
         else:
             self.NETWORK_PROCESSED_REGIONS_OUTPUT_PATH = self.TESTING_OUTPUT_SUBFOLDER_PATH + self.NETWORK_MODEL_NAME + "/"     # Path to folder to save network processed regions.
+
+        self.set_noise(self.NOISE)
+
+    def set_noise(self, noise_name):
+        self.NOISE = noise_name
+
+        if self.NOISE == "gaussian_1":
+            self.GAUSSIAN_NOISE_MEAN = 0
+            self.GAUSSIAN_NOISE_STANDARD_DESVIATION = 0.1
+
+        if self.NOISE == "gaussian_2":
+            self.GAUSSIAN_NOISE_MEAN = 0
+            self.GAUSSIAN_NOISE_STANDARD_DESVIATION = 0.2
+
+        if self.NOISE == "gaussian_3":
+            self.GAUSSIAN_NOISE_MEAN = 0
+            self.GAUSSIAN_NOISE_STANDARD_DESVIATION = 0.3
+
+        if self.NOISE == "uniform_1":
+            self.UNIFORM_MIN_VALUE = -0.5
+            self.UNIFORM_MAX_VALUE = 0.5
