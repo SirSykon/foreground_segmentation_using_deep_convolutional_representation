@@ -148,5 +148,3 @@ def get_change_detection_noises_categories_and_videos_list(dataset_path = None, 
             print("{} is not folder.".format(noise_path))
             
     return noises_categories_and_videos_list                                                            # We return the data
-
-

@@ -4,7 +4,6 @@ import time
 import numpy as np
 import random
 import math
-from glob import glob
 import tensorflow as tf
 import tensorflow.keras.layers as layers
 from config import Config
