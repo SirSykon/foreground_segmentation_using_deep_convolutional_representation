@@ -10,6 +10,7 @@ import numpy as np
 import cv2
 import os
 import random
+from tqdm import tqdm
 from glob import glob
 
 from config import Config
@@ -26,7 +27,7 @@ number_of_training_data_files = int(Config.TRAINING_DATA_SIZE / Config.TRAINING_
 for training_data_file_index in range(number_of_training_data_files):
     training_data_in_file = None                                                                # Matrix that contains the data that will be saved in this file.
     
-    for patch_index in range(Config.TRAINING_DATA_PER_FILE):                                        
+    for patch_index in tqdm(range(Config.TRAINING_DATA_PER_FILE)):                                        
         img_index = random.randint(0,len(all_images_paths)-1)                                           # We get the image index to use.
         img_path = all_images_paths[img_index]                                                          # We get the image path.
         assert img_path[-4:] == ".jpg" or img_path[-4:] == ".png"                                       # We esure img_path is a image.

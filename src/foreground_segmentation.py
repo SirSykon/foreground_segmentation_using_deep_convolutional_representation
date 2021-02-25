@@ -132,7 +132,7 @@ def segmentate_image(image, autoencoder, background_model, vol_h = 1, L = 16, al
     #print(K_v.shape)
     #print(tf.reduce_sum(tf.cast(tf.math.is_nan(K_v),tf.int32)).numpy())
     
-    U_v = tf.cast(1./vol_h, tf.float64)                                                                                                                       # eq 10
+    U_v = tf.cast(1./vol_h, tf.float64)                                                                                                 # eq 10
     p_v_Back = K_v                                                                                                                      # eq 7
     p_v_Fore = U_v                                                                                                                      # eq 8
     R_Fore = tf.divide(np.multiply(pi_Fore, p_v_Fore), tf.add(tf.multiply(pi_Back, p_v_Back), tf.multiply(pi_Fore, p_v_Fore)))          # eq 17
