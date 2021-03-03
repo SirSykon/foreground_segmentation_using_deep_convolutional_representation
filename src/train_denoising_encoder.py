@@ -162,7 +162,7 @@ basic_training_data_generator = data_utils.data_generator(
 encoder_training_generator = data_utils.autoencoder_data_generator(
     basic_training_data_generator, 
     preprocessing_function = normalize_data, 
-    x_preprocessing_function = None,
+    x_preprocessing_function = add_gaussian_noise,
     y_preprocessing_function = None)
 
 basic_validation_data_generator = data_utils.data_generator(
@@ -172,7 +172,7 @@ basic_validation_data_generator = data_utils.data_generator(
 encoder_validation_generator = data_utils.autoencoder_data_generator(
     basic_validation_data_generator, 
     preprocessing_function = normalize_data,
-    x_preprocessing_function = None,
+    x_preprocessing_function = add_gaussian_noise,
     y_preprocessing_function = None)
 
 encoder_optimizer = tf.keras.optimizers.Adam(1e-3)

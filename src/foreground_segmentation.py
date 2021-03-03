@@ -6,13 +6,14 @@ import random
 import math
 import tensorflow as tf
 import tensorflow.keras.layers as layers
-from config import Config
+import  config
 import GPU_utils as GPU_utils               # pylint: disable=no-name-in-module
 import data_utils                           # pylint: disable=no-name-in-module
 import datasets_utils
 import Autoencoder
 import time
 
+configuration = config.Config()
 """
 FUNCTIONS
 """
@@ -76,7 +77,7 @@ def welford_algorithm(image, autoencoder, existingAggregate, finalize):
 Function to segmentate image.
 """
 #@tf.function
-def segmentate_image(image, autoencoder, background_model, vol_h = 1, L = 16, alpha = 0.001, pi_Fore = 0.5, pi_Back = 0.5, min_var = 0.001):
+def segmentate_image(image, autoencoder, background_model, vol_h = 1, L = 8, alpha = 0.001, pi_Fore = 0.5, pi_Back = 0.5, min_var = 0.001):
     v = autoencoder.encode(tf.expand_dims(image,0))[0]                                                                                  # We encode the image.
     assert L == v.shape[-1]                                                                                                             # We ensure L is the same as the channel depth.
     v = tf.cast(v, tf.float64)                                                                                                          # We ensure is a tf double tensor.
@@ -194,6 +195,7 @@ def video_segmentation(video_images_paths, num_training_images, autoencoder, seg
             segmented_image, background_model = segmentate_image(image, 
                                                                     autoencoder, 
                                                                     background_model,
+                                                                    L = configuration.L,
                                                                     min_var = min_var)   # We get the segmented image and the updated background model.
             #print(segmented_image.numpy())
             segmented_image_path = os.path.join(segmentation_folder, 
@@ -214,19 +216,19 @@ def video_segmentation(video_images_paths, num_training_images, autoencoder, seg
 GENERAL INITIALIZATION
 """
 
-GPU_utils.tensorflow_2_x_dark_magic_to_restrict_memory_use(Config.GPU_TO_USE)
+GPU_utils.tensorflow_2_x_dark_magic_to_restrict_memory_use(configuration.GPU_TO_USE)
 
-autoencoder = Autoencoder.Autoencoder(Config.MODEL_FOLDER_PATH, load = True)                    # We lad a generic autoencoder defined by the model path given as argument.
+autoencoder = Autoencoder.Autoencoder(configuration.MODEL_FOLDER_PATH, load = True)                    # We lad a generic autoencoder defined by the model path given as argument.
 
-for (noise, category, video_name) in datasets_utils.get_change_detection_noises_categories_and_videos_list(filter_value = None):
+for (noise, category, video_name) in datasets_utils.get_change_detection_noises_categories_and_videos_list(filter_value = "canoe"):
     print(noise)
     print(category)
     print(video_name)
-    if category in Config.CATEGORIES_TO_TEST:
+    if category in configuration.CATEGORIES_TO_TEST:
         video_images_list, video_initial_roi_frame, video_last_roi_frame = datasets_utils.get_noise_change_detection_data(video_name, noise)
         print("ROI")
         print(video_initial_roi_frame)
-        segmentation_folder = os.path.join(Config.SEGMENTATION_OUTPUT_FOLDER, 
+        segmentation_folder = os.path.join(configuration.SEGMENTATION_OUTPUT_FOLDER, 
                                             noise,
                                             category, 
                                             video_name)

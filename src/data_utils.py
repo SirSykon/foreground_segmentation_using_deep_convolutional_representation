@@ -101,6 +101,7 @@ def autoencoder_data_generator(source_generator, preprocessing_function = None, 
     inputs:
         source_generator : generator -> a generator to get batches of numpy arays.
         proprocessing_function : function -> function to apply to the data obtained from source_generator.
+        x_preprocessing_function : function -> function to apply to the x_batch.
         y_preprocessing_function : function -> function to apply to the y_batch.
 
     output:
@@ -180,7 +181,7 @@ def add_uniform_noise(matrix, uniform_min_value = -0.5, uniform_max_value = 0.5,
     outputs:
         clipped_noise_added_matrix : numpy matrix -> Matrix output from adding uniform noise to input matrix but ensuring no value lower than min_value and no value greater than max_value.
     """
-    uniform_matrix = np.random.normaluniform(low = uniform_min_value, high = uniform_max_value, size = matrix.shape)
+    uniform_matrix = np.random.uniform(low = uniform_min_value, high = uniform_max_value, size = matrix.shape)
     noise_added_matrix = matrix + uniform_matrix
     clipped_noise_added_matrix = np.clip(noise_added_matrix, min_value, max_value)
     return clipped_noise_added_matrix

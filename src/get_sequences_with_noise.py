@@ -8,8 +8,8 @@ configuration = config.Config()
 
 def add_noise_to_video(video_images_paths, add_noise, output_folder):
     for index, video_image_path in enumerate(video_images_paths):
-        image = cv2.imread(video_image_path)/255.
         print(f"input: {video_image_path}")
+        image = cv2.imread(video_image_path)/255.        
         image_with_noise = add_noise(image)
         image_with_noise_path = os.path.join(output_folder, 
                                                 "img{:0>6}.png".format(index+1))                # We generate the new image path.
