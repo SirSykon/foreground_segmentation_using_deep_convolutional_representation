@@ -9,7 +9,7 @@ class Config:
     CATEGORIES_TO_TEST = ["baseline","dynamicBackground"]
     
     MAIN_OUTPUT_FOLDER = "../output/"                                                                                   # Main output folder to save all data.
-    NETWORK_MODEL_NAME = "conv9"                                                                                        # Network model name.
+    NETWORK_MODEL_NAME = "conv10"                                                                                        # Network model name.
     SEGMENTATION_OUTPUT_FOLDER = MAIN_OUTPUT_FOLDER + "segmentation/" + NETWORK_MODEL_NAME + "/"
     TRAINING_OUTPUT_SUBFOLDER = "training_output_subfolder/"                                                            # Subfolder to save training output debugging data.
     TRAINING_OUTPUT_SUBFOLDER_PATH = MAIN_OUTPUT_FOLDER + TRAINING_OUTPUT_SUBFOLDER                                     # Subfolder to save testing output debugging data.
@@ -23,7 +23,7 @@ class Config:
     NETWORK_TRAINING_DATA_FILES_NAME_STRUCTURE = "training_data_file_{}.npy"
 
     NOISE = "gaussian_1"                                                                                                # Default noise to use.
-    NOISES_LIST = ["uniform_1"]                                               # List of noises to use.
+    NOISES_LIST = ["gaussian_1", "gaussian_2", "gaussian_3", "uniform_1"]                                               # List of noises to use.
     
     BATCH_SIZE = 64                                                                                                     # Network training batch size.
     EPOCHS = 20                                                                                                         # Network training epochs.
@@ -62,6 +62,9 @@ class Config:
             raise(NotImplementedError)
         if self.NETWORK_MODEL_NAME == "conv9":
             self.AUTOENCODER_MODEL = Autoencoder.Convolutional_Autoencoder_6_encoding_decoding_layers_3x3_filters
+            self.L = 2
+        if self.NETWORK_MODEL_NAME == "conv10":
+            self.AUTOENCODER_MODEL = Autoencoder.Convolutional_Autoencoder_6_encoding_decoding_layers_5x5_filters
             self.L = 2
         if self.NETWORK_MODEL_NAME == "conv_orig":
             self.AUTOENCODER_MODEL = Autoencoder.Convolutional_Autoencoder
