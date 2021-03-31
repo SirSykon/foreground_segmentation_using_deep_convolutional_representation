@@ -69,9 +69,12 @@ def get_noise_change_detection_data(video_to_get_name, noise):
                             list_images = sorted(glob(os.path.join(video_in_category,"*.png")))         # We get the list of images paths.
                             if len(list_images) == 0:
                                 list_images = sorted(glob(os.path.join(video_in_category,"*.jpeg")))         # We get the list of images paths.
+                            if len(list_images) == 0:
+                                list_images = sorted(glob(os.path.join(video_in_category,"*.jpg")))         # We get the list of images paths.
+                            
                             
                         return list_images, initial_roi_frame, last_roi_frame                           # We return the data
-                
+
 """
 Function to get ground truth images from change detection video given its name,
 Inputs:
@@ -135,7 +138,6 @@ def get_change_detection_noises_categories_and_videos_list(dataset_path = None, 
         dataset_path = Config.NOISE_CHANGEDETECTON_DATASET_PATH
 
     noises_path = glob(os.path.join(dataset_path, "*"))                                 # We get the categories path.
-    
     noises_categories_and_videos_list = []
     
     for noise_path in noises_path:                                                                      #For each noise path...
@@ -143,7 +145,7 @@ def get_change_detection_noises_categories_and_videos_list(dataset_path = None, 
             _, noise_name = os.path.split(noise_path)                                                       # We get the noise name.
             categories_in_noise_paths = glob(os.path.join(noise_path, "*"))                                 # We get the categories in video path.
             for category_name, video_name in get_change_detection_categories_and_videos_list():             # For each combination of category and video...
-                        noises_categories_and_videos_list.append((noise_name, category_name, video_name))   # We add the tuple to the list.
+                noises_categories_and_videos_list.append((noise_name, category_name, video_name))   # We add the tuple to the list.
         else:
             print("{} is not folder.".format(noise_path))
             

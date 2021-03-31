@@ -220,14 +220,14 @@ GPU_utils.tensorflow_2_x_dark_magic_to_restrict_memory_use(configuration.GPU_TO_
 
 autoencoder = Autoencoder.Autoencoder(configuration.MODEL_FOLDER_PATH, load = True)                    # We lad a generic autoencoder defined by the model path given as argument.
 
-for (noise, category, video_name) in datasets_utils.get_change_detection_noises_categories_and_videos_list(filter_value = "canoe"):
+for (noise, category, video_name) in datasets_utils.get_change_detection_noises_categories_and_videos_list():
     print(noise)
     print(category)
     print(video_name)
     if category in configuration.CATEGORIES_TO_TEST:
         video_images_list, video_initial_roi_frame, video_last_roi_frame = datasets_utils.get_noise_change_detection_data(video_name, noise)
-        print("ROI")
-        print(video_initial_roi_frame)
+        print(f"Total images {len(video_images_list)}")
+        print(f"ROI from {video_initial_roi_frame}")
         segmentation_folder = os.path.join(configuration.SEGMENTATION_OUTPUT_FOLDER, 
                                             noise,
                                             category, 

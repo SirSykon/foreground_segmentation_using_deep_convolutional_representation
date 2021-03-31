@@ -9,7 +9,7 @@ class Config:
     CATEGORIES_TO_TEST = ["baseline","dynamicBackground"]
     
     MAIN_OUTPUT_FOLDER = "../output/"                                                                                   # Main output folder to save all data.
-    NETWORK_MODEL_NAME = "conv10"                                                                                        # Network model name.
+    NETWORK_MODEL_NAME = "conv11"                                                                                        # Network model name.
     SEGMENTATION_OUTPUT_FOLDER = MAIN_OUTPUT_FOLDER + "segmentation/" + NETWORK_MODEL_NAME + "/"
     TRAINING_OUTPUT_SUBFOLDER = "training_output_subfolder/"                                                            # Subfolder to save training output debugging data.
     TRAINING_OUTPUT_SUBFOLDER_PATH = MAIN_OUTPUT_FOLDER + TRAINING_OUTPUT_SUBFOLDER                                     # Subfolder to save testing output debugging data.
@@ -66,6 +66,9 @@ class Config:
         if self.NETWORK_MODEL_NAME == "conv10":
             self.AUTOENCODER_MODEL = Autoencoder.Convolutional_Autoencoder_6_encoding_decoding_layers_5x5_filters
             self.L = 2
+        if self.NETWORK_MODEL_NAME == "conv11":
+            self.AUTOENCODER_MODEL = Autoencoder.Convolutional_Autoencoder_2_encoding_decoding_layers_with_maxpool_3x3_filters
+            self.L=32
         if self.NETWORK_MODEL_NAME == "conv_orig":
             self.AUTOENCODER_MODEL = Autoencoder.Convolutional_Autoencoder
         if self.NETWORK_MODEL_NAME == "clean_conv1":
