@@ -10,7 +10,7 @@ class Config:
     CATEGORIES_TO_TEST = ["baseline","dynamicBackground","badWeather","shadow", "lowFramerate", "intermittentObjectMotion", "nightVideos", "turbulence", "thermal"]
     CATEGORIES_TO_TEST = ["baseline","dynamicBackground","badWeather", "nightVideos", "turbulence", "thermal"]
     CATEGORIES_TO_TEST = ["baseline","badWeather", "thermal"]
-    CATEGORIES_TO_TEST = ["dynamicBackground","nightVideos", "turbulence"]
+    CATEGORIES_TO_TEST = ["dynamicBackground","baseline"]
 
     EVALUATE_METHODS_LIST = [   "conv7", 
                                 "conv9", 
@@ -20,7 +20,7 @@ class Config:
                                 "<class 'pybgs.SuBSENSE'>"]                                                                 # Methods names to be evaluated.
 
     NOISES_LIST = ["gaussian_1", "gaussian_2", "gaussian_3", "uniform_1"]                                                   # List of noises to use.
-    NOISES_LIST = ["gaussian_3"]                                                                                            # List of noises to use.
+    NOISES_LIST = ["gaussian_2", "gaussian_3", "uniform_1"]                                                                                            # List of noises to use.
 
     """
     Folders configuration.
@@ -34,9 +34,9 @@ class Config:
     MODELS_FOLDER = MAIN_OUTPUT_FOLDER + "models/"                                                                          # Path to models folder.
     MODEL_FOLDER_PATH = MODELS_FOLDER+NETWORK_MODEL_NAME+"/"                                                                # Path to network model folder.
 
-    TRAINING_DATASET_PATH = "/media/sykon/Maxtor/Files/Work/datasets/COCO/images/train2017"                                 # Training dataset folder path.
-    CHANGEDETECTON_DATASET_PATH = "../../datasets/change_detection/dataset2014/dataset"                                     # We use default dataset position..
-    NOISE_CHANGEDETECTON_DATASET_PATH = "../output/noise_change_detection"                                                  # We use default dataset position..
+    TRAINING_DATASET_PATH = "/media/jrggcgz/Maxtor/Files/Work/datasets/COCO/images/train2017"                                 # Training dataset folder path.
+    CHANGEDETECTON_DATASET_PATH = "/home/jrggcgz/Work/datasets/change_detection/dataset2014/dataset"                             # We use default dataset position..
+    NOISE_CHANGEDETECTON_DATASET_PATH = "/home/jrggcgz/Work/datasets/noise_change_detection"                                                # We use default dataset position..
 
     NETWORK_TRAINING_DATA_PATH = MAIN_OUTPUT_FOLDER + "network_training_data/"                                              # Path to network training data.
     NETWORK_TRAINING_DATA_FILES_NAME_STRUCTURE = "training_data_file_{}.npy"                                                # Autoencoder training data files structures.
@@ -44,7 +44,7 @@ class Config:
     BGS_FOLDER = os.path.abspath("../../bgslibrary/")
 
     RIVALS_MAIN_OUTPUT_FOLDER = "../output/rivals/"
-    RIVALS_MAIN_OUTPUT_FOLDER = "/media/sykon/Maxtor/Files/Work/foreground_segmentation_using_deep_convolutional_representation/rivals"
+    RIVALS_MAIN_OUTPUT_FOLDER = "/media/sykon/Maxtor/Files/Work/foreground_segmentation_using_deep_convolutional_representation/rivals" 
 
 
     """
@@ -57,6 +57,7 @@ class Config:
     NUM_CHANNELS = 3                                                                                                        # Number of channels.
     TRAINING_DATA_SIZE = 400000                                                                                             # How many instances should we get to train the autoencoder?
     TRAINING_DATA_PER_FILE = 5000                                                                                           # Ho many isntances should we introduce in each file?
+    SPECIFIC_SEQUENCE_TRAINING_DATA_SIZE = 40000
     GPU_TO_USE = 0                                                                                                          # GPU to use.
     VALIDATION_DATA_SPLIT_FOR_NETWORK_TRAINING = 0.2                                                                        # Validation split to use during network training.
     STEPS_PER_EPOCH = TRAINING_DATA_SIZE//BATCH_SIZE                                                                        # How many batches do we use to train within each epoch?
@@ -120,7 +121,7 @@ class Config:
         else:
             self.NETWORK_PROCESSED_REGIONS_OUTPUT_PATH = self.TESTING_OUTPUT_SUBFOLDER_PATH + self.NETWORK_MODEL_NAME + "/"     # Path to folder to save network processed regions.
 
-        self.set_noise(self.NOISE)
+        self.set_noise(self.NOISES_LIST[0])
 
         self.ALL_SEGMENTATION_OUTPUT_FOLDER = [os.path.join(self.MAIN_OUTPUT_FOLDER, "segmentation/", method_name) for method_name in self.EVALUATE_METHODS_LIST]
 

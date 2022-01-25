@@ -143,7 +143,6 @@ def get_change_detection_noises_categories_and_videos_list(dataset_path = None, 
     for noise_path in noises_path:                                                                      #For each noise path...
         if os.path.isdir(noise_path):
             _, noise_name = os.path.split(noise_path)                                                       # We get the noise name.
-            categories_in_noise_paths = glob(os.path.join(noise_path, "*"))                                 # We get the categories in video path.
             for category_name, video_name in get_change_detection_categories_and_videos_list():             # For each combination of category and video...
                 noises_categories_and_videos_list.append((noise_name, category_name, video_name))   # We add the tuple to the list.
         else:
