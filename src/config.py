@@ -1,12 +1,15 @@
 import Autoencoder
 import os
 
+from data_utils import get_add_gaussian_noise_function
+
 class Config:
     """
     General configuration.
     """
+    CONFIG_FILE_PATH = os.path.abspath("./config.py")
     TRAINING = False                                                                                                        # Configuration for training.
-    NETWORK_MODEL_NAME = "conv11"                                                                                           # Network model name.
+    NETWORK_MODEL_NAME = "conv9"                                                                                           # Network model name.
     CATEGORIES_TO_TEST = ["baseline","dynamicBackground","badWeather","shadow", "lowFramerate", "intermittentObjectMotion", "nightVideos", "turbulence", "thermal"]
     CATEGORIES_TO_TEST = ["baseline","dynamicBackground","badWeather", "nightVideos", "turbulence", "thermal"]
     CATEGORIES_TO_TEST = ["baseline","badWeather", "thermal"]
@@ -20,7 +23,13 @@ class Config:
                                 "<class 'pybgs.SuBSENSE'>"]                                                                 # Methods names to be evaluated.
 
     NOISES_LIST = ["gaussian_1", "gaussian_2", "gaussian_3", "uniform_1"]                                                   # List of noises to use.
-    NOISES_LIST = ["gaussian_2", "gaussian_3", "uniform_1"]                                                                                            # List of noises to use.
+    NOISES_LIST = ["gaussian_2", "gaussian_3", "uniform_1"]                                                                 # List of noises to use.
+
+    TRAIN_SPECIFIC_AUTOENCODERS_FOR_EACH_SCENE_AND_NOISE = True                                                             # Do we train an specific autoencoder for each scene and noise?
+
+    #FUNCTION_TO_APPLY_TO_X_TRAINING_DATA = get_add_gaussian_noise_function(gaussian_noise_mean=0, gaussian_noise_standard_desviation=0.2)
+    FUNCTION_TO_APPLY_TO_X_DATA = None
+    FUNCTION_TO_APPLY_TO_Y_DATA = None
 
     """
     Folders configuration.
@@ -34,9 +43,9 @@ class Config:
     MODELS_FOLDER = MAIN_OUTPUT_FOLDER + "models/"                                                                          # Path to models folder.
     MODEL_FOLDER_PATH = MODELS_FOLDER+NETWORK_MODEL_NAME+"/"                                                                # Path to network model folder.
 
-    TRAINING_DATASET_PATH = "/media/jrggcgz/Maxtor/Files/Work/datasets/COCO/images/train2017"                                 # Training dataset folder path.
-    CHANGEDETECTON_DATASET_PATH = "/home/jrggcgz/Work/datasets/change_detection/dataset2014/dataset"                             # We use default dataset position..
-    NOISE_CHANGEDETECTON_DATASET_PATH = "/home/jrggcgz/Work/datasets/noise_change_detection"                                                # We use default dataset position..
+    TRAINING_DATASET_PATH = "/media/jrggcgz/Maxtor/Files/Work/datasets/COCO/images/train2017"                               # Training dataset folder path.
+    CHANGEDETECTON_DATASET_PATH = "../../datasets/change_detection/dataset2014/dataset"                                     # We use default dataset position..
+    NOISE_CHANGEDETECTON_DATASET_PATH = "../../datasets/noise_change_detection"                                             # We use default dataset position..
 
     NETWORK_TRAINING_DATA_PATH = MAIN_OUTPUT_FOLDER + "network_training_data/"                                              # Path to network training data.
     NETWORK_TRAINING_DATA_FILES_NAME_STRUCTURE = "training_data_file_{}.npy"                                                # Autoencoder training data files structures.
@@ -52,7 +61,7 @@ class Config:
     """
     
     BATCH_SIZE = 64                                                                                                         # Network training batch size.
-    EPOCHS = 20                                                                                                             # Network training epochs.
+    EPOCHS = 10                                                                                                             # Network training epochs.
     PATCH_IMG_SIZE = (64,64)                                                                                                # Patches image shape.
     NUM_CHANNELS = 3                                                                                                        # Number of channels.
     TRAINING_DATA_SIZE = 400000                                                                                             # How many instances should we get to train the autoencoder?

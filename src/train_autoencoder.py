@@ -2,7 +2,7 @@ import os
 import time
 import numpy as np
 import random
-import math
+import shutil
 from tqdm import tqdm
 from glob import glob
 import tensorflow as tf
@@ -10,7 +10,7 @@ import tensorflow.keras.layers as layers
 import config
 import GPU_utils as GPU_utils               # pylint: disable=no-name-in-module
 import data_utils                           # pylint: disable=no-name-in-module
-import Autoencoder
+import datasets_utils
 from contextlib import redirect_stdout
 
 configuration = config.Config()
@@ -72,9 +72,7 @@ inputs:
     autoencoder : model -> autoencoder model to train.
     aut_optimizer : optimizer -> optimizer to apply gradients to the model.
 """
-# Notice the use of `tf.function`
-# This annotation causes the function to be "compiled".
-@tf.function
+
 def train_step(x_batch, y_batch, autoencoder, aut_optimizer):
 
     with tf.GradientTape() as aut_tape:
@@ -98,7 +96,9 @@ inputs:
     validation_steps_per_epoch : Number of validation steps for each epoch.
     vistual_test_clip : image -> Image to apply the model and save the output as visual reference.
 """
-def train(training_dataset_generator, validation_dataset_generator, autoencoder, aut_optimizer, checkpoint, training_steps_per_epoch, validation_steps_per_epoch, visual_test_clip=None):
+def train(training_dataset_generator, validation_dataset_generator, autoencoder, autoencoder_optimizer, checkpoint, checkpoint_prefix, training_steps_per_epoch, validation_steps_per_epoch, visual_test_clip=None):
+    #train_step_tf = tf.function(train_step).get_concrete_function(w, x, y, autoencoder_optimizer)
+    
     for epoch in range(configuration.EPOCHS):                                                                      # For each epoch...
         start = time.time()                                                                                 # We get the time reference.
         print("Epoch {}.".format(epoch+1))                                          
@@ -108,17 +108,19 @@ def train(training_dataset_generator, validation_dataset_generator, autoencoder,
         # Training phase.
         for batch_index, training_data in tqdm(enumerate(training_dataset_generator), total=training_steps_per_epoch):  # For each batch we obtain...
             (x_batch, y_batch) = training_data
-            rec_loss, reconstructed_x_batch = train_step(x_batch, y_batch, autoencoder, aut_optimizer)      # We apply a train step.
+            rec_loss, reconstructed_x_batch = train_step(x_batch, y_batch, autoencoder, autoencoder_optimizer)      # We apply a train step.
             training_loss_vector[batch_index] = rec_loss                                                    # We save the loss into the training loss vector.
 
             if batch_index == training_steps_per_epoch - 1:                                                 # If we reach the number of training_steps_per_epoch.
                 break                                                                                       # We break the loop. This is ugly but don't blame me, blame the system.
+        """
         print("x batch original")
         print(x_batch)
         print("x batch reconstructed")
         print(reconstructed_x_batch)
         print("x batch encoded")
         print(autoencoder.encode(x_batch))
+        """
         # Validation phase.
         for batch_index, validation_data in enumerate(validation_dataset_generator):                        # For each batch we obtain...
             (x_batch, y_batch) = validation_data
@@ -153,73 +155,114 @@ def train(training_dataset_generator, validation_dataset_generator, autoencoder,
             
         """
 
-data_files_paths = glob(os.path.join(configuration.NETWORK_TRAINING_DATA_PATH, "*"))
-random.shuffle(data_files_paths)
-number_of_files = len(data_files_paths)
-
-validation_number_of_files = int(number_of_files*configuration.VALIDATION_DATA_SPLIT_FOR_NETWORK_TRAINING)
-
-basic_training_data_generator = data_utils.data_generator(
-    data_files_paths = data_files_paths[validation_number_of_files:], 
-    batch_size = configuration.BATCH_SIZE, 
-    change_file_after_getting_x_data_batches = configuration.TRAINING_DATA_PER_FILE//configuration.BATCH_SIZE)
-autoencoder_training_generator = data_utils.autoencoder_data_generator(
-    basic_training_data_generator, 
-    preprocessing_function = normalize_data, 
-    x_preprocessing_function = None,
-    y_preprocessing_function = None)
-
-basic_validation_data_generator = data_utils.data_generator(
-    data_files_paths = data_files_paths[:validation_number_of_files], 
-    batch_size = configuration.BATCH_SIZE, 
-    change_file_after_getting_x_data_batches = configuration.TRAINING_DATA_PER_FILE//configuration.BATCH_SIZE)    
-autoencoder_validation_generator = data_utils.autoencoder_data_generator(
-    basic_validation_data_generator, 
-    preprocessing_function = normalize_data,
-    x_preprocessing_function = None,
-    y_preprocessing_function = None)
-    
-    # data_utils.add_gaussian_noise
-
-autoencoder_optimizer = tf.keras.optimizers.Adam(1e-3)
-
-autoencoder = make_convolutional_autoencoder_model()
-print(autoencoder)
-print(len(autoencoder.trainable_variables))
-print(autoencoder.trainable_variables[0].shape)
-
-checkpoint_prefix = os.path.join(configuration.MODEL_FOLDER_PATH, "AUT_ckpt")
-checkpoint = tf.train.Checkpoint(autoencoder=autoencoder,
-                                 autoencoder_optimizer=autoencoder_optimizer)
-                                
 
 """
-for x in clip_generator_class.batch_generator():
-    print(x)
-    print(x[0].shape)
-quit()
+Function to execute the training.
+inputs:
+    configuration : config.Config -> configuration class with the information to 
+    network_training_data_path : str -> Folder with the training data files to use.
 """
-
-#predictor.compile("adam", "mse")
-#predictor.fit(clip_dataset, epochs = configuration.epochs)
-
-#visual_test_clip = np.load(os.path.join(configuration.clip_dataset_path, "clip_0000001.npy"))
-#visual_test_clip = all_dataset[0]
-#print("Saving test clip.")
-#print("Visual test batch shape: {}".format(visual_test_clip.shape))
-#reconstruction = autoencoder.predict(np.expand_dims(visual_test_clip, axis=0))
-#print("Prediction shape: {}".format(prediction.shape))
-#image_utils.print_image((prediction[0]+1)*127.5, os.path.join(configuration.MAIN_OUTPUT_FOLDER, "testAutoencoder0"), image_preffix="reconstructed_image_{}".format(epoch+1))
-#print("Reconstruction loss: {}".format(reconstruction_loss(np.expand_dims(visual_test_clip, axis=0), prediction)))
-
-train(
-    autoencoder_training_generator, 
-    autoencoder_validation_generator, 
-    autoencoder,
-    autoencoder_optimizer,
-    checkpoint, 
-    configuration.STEPS_PER_EPOCH,
-    int(configuration.STEPS_PER_EPOCH*configuration.VALIDATION_DATA_SPLIT_FOR_NETWORK_TRAINING), 
-    visual_test_clip=None)
+def train_autoencoder(configuration, network_training_data_path=None):
     
-autoencoder.save()
+    if network_training_data_path is None:
+        data_files_paths = glob(os.path.join(configuration.NETWORK_TRAINING_DATA_PATH, "*"))
+    else:
+        data_files_paths = glob(os.path.join(network_training_data_path, "*"))
+
+    # We will copy the configuration file.
+    if not os.path.isdir(configuration.MODEL_FOLDER_PATH):
+        os.makedirs(configuration.MODEL_FOLDER_PATH)
+    config_path = os.path.join(configuration.MODEL_FOLDER_PATH, "config.py")
+    shutil.copyfile(configuration.CONFIG_FILE_PATH, config_path)
+    print(f"Copying configuration file to {config_path}.")
+    
+    random.shuffle(data_files_paths)
+    number_of_files = len(data_files_paths)
+
+    validation_number_of_files = int(number_of_files*configuration.VALIDATION_DATA_SPLIT_FOR_NETWORK_TRAINING)
+
+    basic_training_data_generator = data_utils.data_generator(
+        data_files_paths = data_files_paths[validation_number_of_files:], 
+        batch_size = configuration.BATCH_SIZE, 
+        change_file_after_getting_x_data_batches = configuration.TRAINING_DATA_PER_FILE//configuration.BATCH_SIZE)
+    autoencoder_training_generator = data_utils.autoencoder_data_generator(
+        basic_training_data_generator, 
+        preprocessing_function = normalize_data, 
+        x_preprocessing_function = configuration.FUNCTION_TO_APPLY_TO_X_DATA,
+        y_preprocessing_function = configuration.FUNCTION_TO_APPLY_TO_Y_DATA)
+
+    basic_validation_data_generator = data_utils.data_generator(
+        data_files_paths = data_files_paths[:validation_number_of_files], 
+        batch_size = configuration.BATCH_SIZE, 
+        change_file_after_getting_x_data_batches = configuration.TRAINING_DATA_PER_FILE//configuration.BATCH_SIZE)    
+    autoencoder_validation_generator = data_utils.autoencoder_data_generator(
+        basic_validation_data_generator, 
+        preprocessing_function = normalize_data,
+        x_preprocessing_function = configuration.FUNCTION_TO_APPLY_TO_X_DATA,
+        y_preprocessing_function = configuration.FUNCTION_TO_APPLY_TO_Y_DATA)
+        
+        # data_utils.add_gaussian_noise
+
+    autoencoder_optimizer = tf.keras.optimizers.Adam(1e-3)
+
+    autoencoder = make_convolutional_autoencoder_model()
+    print(autoencoder)
+    print(len(autoencoder.trainable_variables))
+    print(autoencoder.trainable_variables[0].shape)
+
+    checkpoint_prefix = os.path.join(configuration.MODEL_FOLDER_PATH, "AUT_ckpt")
+    checkpoint = tf.train.Checkpoint(autoencoder=autoencoder,
+                                    autoencoder_optimizer=autoencoder_optimizer)
+
+    """
+    for x in clip_generator_class.batch_generator():
+        print(x)
+        print(x[0].shape)
+    quit()
+    """
+
+    #predictor.compile("adam", "mse")
+    #predictor.fit(clip_dataset, epochs = configuration.epochs)
+
+    #visual_test_clip = np.load(os.path.join(configuration.clip_dataset_path, "clip_0000001.npy"))
+    #visual_test_clip = all_dataset[0]
+    #print("Saving test clip.")
+    #print("Visual test batch shape: {}".format(visual_test_clip.shape))
+    #reconstruction = autoencoder.predict(np.expand_dims(visual_test_clip, axis=0))
+    #print("Prediction shape: {}".format(prediction.shape))
+    #image_utils.print_image((prediction[0]+1)*127.5, os.path.join(configuration.MAIN_OUTPUT_FOLDER, "testAutoencoder0"), image_preffix="reconstructed_image_{}".format(epoch+1))
+    #print("Reconstruction loss: {}".format(reconstruction_loss(np.expand_dims(visual_test_clip, axis=0), prediction)))
+
+    train(
+        autoencoder_training_generator, 
+        autoencoder_validation_generator, 
+        autoencoder,
+        autoencoder_optimizer,
+        checkpoint,
+        checkpoint_prefix,
+        configuration.STEPS_PER_EPOCH,
+        int(configuration.STEPS_PER_EPOCH*configuration.VALIDATION_DATA_SPLIT_FOR_NETWORK_TRAINING), 
+        visual_test_clip=None)
+        
+    autoencoder.save()
+
+
+if configuration.TRAIN_SPECIFIC_AUTOENCODERS_FOR_EACH_SCENE_AND_NOISE:
+    main_model_saving_folder = configuration.MODEL_FOLDER_PATH
+    for (noise, category, video_name) in datasets_utils.get_change_detection_noises_categories_and_videos_list():
+        print(noise)
+        print(category)
+        print(video_name)
+        if category in configuration.CATEGORIES_TO_TEST and noise in configuration.NOISES_LIST:
+            configuration.MODEL_FOLDER_PATH = os.path.join(main_model_saving_folder, f"{video_name}_{noise}")
+            training_data_folder = os.path.join(configuration.NETWORK_TRAINING_DATA_PATH, f"{video_name}_{noise}")
+            train_autoencoder(configuration, network_training_data_path=training_data_folder)
+        else:
+            print(f"{noise} noise or {category} category combination is not in configuration.")
+    configuration.MODEL_FOLDER_PATH = main_model_saving_folder
+
+else:
+
+    train_autoencoder()
+
+    

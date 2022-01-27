@@ -40,7 +40,10 @@ class Autoencoder(tf.keras.Model):
             self.load_encoder()
             self.load_decoder()
         else:
-            print("Path to save: {}".format(models_path))            
+            print("Path to save: {}".format(models_path))
+            if not os.path.isdir(self.models_path):
+                os.makedirs(self.models_path)
+                
             self.encoder = self.define_encoder()
             print("Encoder defined")
             self.encoder.summary()
