@@ -161,8 +161,10 @@ Function to execute the training.
 inputs:
     configuration : config.Config -> configuration class with the information to 
     network_training_data_path : str -> Folder with the training data files to use.
+    function_to_apply_to_x_data : function -> Function to apply to the input data while training.
+    function_to_apply_to_y_data : function -> Function to apply to the output data while training.
 """
-def train_autoencoder(configuration, network_training_data_path=None):
+def train_autoencoder(configuration, network_training_data_path=None, function_to_apply_to_x_data=None, function_to_apply_to_y_data=None):
     
     if network_training_data_path is None:
         data_files_paths = glob(os.path.join(configuration.NETWORK_TRAINING_DATA_PATH, "*"))
@@ -176,11 +178,12 @@ def train_autoencoder(configuration, network_training_data_path=None):
     shutil.copyfile(configuration.CONFIG_FILE_PATH, config_path)
     print(f"Copying configuration file to {config_path}.")
     
+    # We prepare the training data to be randomly splitted between training and validation.
     random.shuffle(data_files_paths)
     number_of_files = len(data_files_paths)
-
     validation_number_of_files = int(number_of_files*configuration.VALIDATION_DATA_SPLIT_FOR_NETWORK_TRAINING)
 
+    # We create the generators to obtain the data.
     basic_training_data_generator = data_utils.data_generator(
         data_files_paths = data_files_paths[validation_number_of_files:], 
         batch_size = configuration.BATCH_SIZE, 
@@ -188,8 +191,8 @@ def train_autoencoder(configuration, network_training_data_path=None):
     autoencoder_training_generator = data_utils.autoencoder_data_generator(
         basic_training_data_generator, 
         preprocessing_function = normalize_data, 
-        x_preprocessing_function = configuration.FUNCTION_TO_APPLY_TO_X_DATA,
-        y_preprocessing_function = configuration.FUNCTION_TO_APPLY_TO_Y_DATA)
+        x_preprocessing_function = function_to_apply_to_x_data,
+        y_preprocessing_function = function_to_apply_to_y_data)
 
     basic_validation_data_generator = data_utils.data_generator(
         data_files_paths = data_files_paths[:validation_number_of_files], 
@@ -198,18 +201,17 @@ def train_autoencoder(configuration, network_training_data_path=None):
     autoencoder_validation_generator = data_utils.autoencoder_data_generator(
         basic_validation_data_generator, 
         preprocessing_function = normalize_data,
-        x_preprocessing_function = configuration.FUNCTION_TO_APPLY_TO_X_DATA,
-        y_preprocessing_function = configuration.FUNCTION_TO_APPLY_TO_Y_DATA)
-        
-        # data_utils.add_gaussian_noise
+        x_preprocessing_function = function_to_apply_to_x_data,
+        y_preprocessing_function = function_to_apply_to_y_data)
 
+    # We create the optimizer and the network model.
     autoencoder_optimizer = tf.keras.optimizers.Adam(1e-3)
-
     autoencoder = make_convolutional_autoencoder_model()
     print(autoencoder)
     print(len(autoencoder.trainable_variables))
     print(autoencoder.trainable_variables[0].shape)
 
+    # We create the checkpoint information.
     checkpoint_prefix = os.path.join(configuration.MODEL_FOLDER_PATH, "AUT_ckpt")
     checkpoint = tf.train.Checkpoint(autoencoder=autoencoder,
                                     autoencoder_optimizer=autoencoder_optimizer)
@@ -233,6 +235,7 @@ def train_autoencoder(configuration, network_training_data_path=None):
     #image_utils.print_image((prediction[0]+1)*127.5, os.path.join(configuration.MAIN_OUTPUT_FOLDER, "testAutoencoder0"), image_preffix="reconstructed_image_{}".format(epoch+1))
     #print("Reconstruction loss: {}".format(reconstruction_loss(np.expand_dims(visual_test_clip, axis=0), prediction)))
 
+    # We start the training.
     train(
         autoencoder_training_generator, 
         autoencoder_validation_generator, 
@@ -243,7 +246,8 @@ def train_autoencoder(configuration, network_training_data_path=None):
         configuration.STEPS_PER_EPOCH,
         int(configuration.STEPS_PER_EPOCH*configuration.VALIDATION_DATA_SPLIT_FOR_NETWORK_TRAINING), 
         visual_test_clip=None)
-        
+
+    # We save the model.  
     autoencoder.save()
 
 
@@ -256,13 +260,22 @@ if configuration.TRAIN_SPECIFIC_AUTOENCODERS_FOR_EACH_SCENE_AND_NOISE:
         if category in configuration.CATEGORIES_TO_TEST and noise in configuration.NOISES_LIST:
             configuration.MODEL_FOLDER_PATH = os.path.join(main_model_saving_folder, f"{video_name}_{noise}")
             training_data_folder = os.path.join(configuration.NETWORK_TRAINING_DATA_PATH, f"{video_name}_{noise}")
-            train_autoencoder(configuration, network_training_data_path=training_data_folder)
+            train_autoencoder(
+                configuration, 
+                network_training_data_path=training_data_folder,
+                function_to_apply_to_x_data=configuration.get_noise_function(configuration.NOISE_TO_ADD_TO_INPUT_DATA),
+                function_to_apply_to_y_data=configuration.get_noise_function(configuration.NOISE_TO_ADD_TO_OUTPUT_DATA))
         else:
             print(f"{noise} noise or {category} category combination is not in configuration.")
     configuration.MODEL_FOLDER_PATH = main_model_saving_folder
 
 else:
-
-    train_autoencoder()
+    configuration.MODEL_FOLDER_PATH = os.path.join(configuration.MODEL_FOLDER_PATH, "imagenet")
+    training_data_folder = os.path.join(configuration.NETWORK_TRAINING_DATA_PATH, "imagenet")
+    train_autoencoder(
+        configuration, 
+        network_training_data_path=training_data_folder,
+        function_to_apply_to_x_data=configuration.get_noise_function(configuration.NOISE_TO_ADD_TO_INPUT_DATA),
+        function_to_apply_to_y_data=configuration.get_noise_function(configuration.NOISE_TO_ADD_TO_OUTPUT_DATA))
 
     

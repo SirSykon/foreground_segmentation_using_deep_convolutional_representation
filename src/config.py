@@ -1,7 +1,7 @@
 import Autoencoder
 import os
 
-from data_utils import get_add_gaussian_noise_function
+import data_utils
 
 class Config:
     """
@@ -23,13 +23,12 @@ class Config:
                                 "<class 'pybgs.SuBSENSE'>"]                                                                 # Methods names to be evaluated.
 
     NOISES_LIST = ["gaussian_1", "gaussian_2", "gaussian_3", "uniform_1"]                                                   # List of noises to use.
-    NOISES_LIST = ["gaussian_2", "gaussian_3", "uniform_1"]                                                                 # List of noises to use.
+    NOISES_LIST = ["uniform_1"]                                                                                            # List of noises to use.
 
-    TRAIN_SPECIFIC_AUTOENCODERS_FOR_EACH_SCENE_AND_NOISE = True                                                             # Do we train an specific autoencoder for each scene and noise?
+    TRAIN_SPECIFIC_AUTOENCODERS_FOR_EACH_SCENE_AND_NOISE = False                                                             # Do we train an specific autoencoder for each scene and noise?
 
-    #FUNCTION_TO_APPLY_TO_X_TRAINING_DATA = get_add_gaussian_noise_function(gaussian_noise_mean=0, gaussian_noise_standard_desviation=0.2)
-    FUNCTION_TO_APPLY_TO_X_DATA = None
-    FUNCTION_TO_APPLY_TO_Y_DATA = None
+    NOISE_TO_ADD_TO_INPUT_DATA = "gaussian_2"
+    NOISE_TO_ADD_TO_OUTPUT_DATA = None
 
     """
     Folders configuration.
@@ -55,13 +54,12 @@ class Config:
     RIVALS_MAIN_OUTPUT_FOLDER = "../output/rivals/"
     RIVALS_MAIN_OUTPUT_FOLDER = "/media/sykon/Maxtor/Files/Work/foreground_segmentation_using_deep_convolutional_representation/rivals" 
 
-
     """
     Training configuration.
     """
     
     BATCH_SIZE = 64                                                                                                         # Network training batch size.
-    EPOCHS = 10                                                                                                             # Network training epochs.
+    EPOCHS = 20                                                                                                             # Network training epochs.
     PATCH_IMG_SIZE = (64,64)                                                                                                # Patches image shape.
     NUM_CHANNELS = 3                                                                                                        # Number of channels.
     TRAINING_DATA_SIZE = 400000                                                                                             # How many instances should we get to train the autoencoder?
@@ -69,7 +67,6 @@ class Config:
     SPECIFIC_SEQUENCE_TRAINING_DATA_SIZE = 40000
     GPU_TO_USE = 0                                                                                                          # GPU to use.
     VALIDATION_DATA_SPLIT_FOR_NETWORK_TRAINING = 0.2                                                                        # Validation split to use during network training.
-    STEPS_PER_EPOCH = TRAINING_DATA_SIZE//BATCH_SIZE                                                                        # How many batches do we use to train within each epoch?
 
     def __init__(self):
         self.AUTOENCODER_MODEL = None
@@ -130,6 +127,11 @@ class Config:
         else:
             self.NETWORK_PROCESSED_REGIONS_OUTPUT_PATH = self.TESTING_OUTPUT_SUBFOLDER_PATH + self.NETWORK_MODEL_NAME + "/"     # Path to folder to save network processed regions.
 
+        if self.TRAIN_SPECIFIC_AUTOENCODERS_FOR_EACH_SCENE_AND_NOISE:
+            self.STEPS_PER_EPOCH = self.SPECIFIC_SEQUENCE_TRAINING_DATA_SIZE//self.BATCH_SIZE                                                                       # How many batches do we use to train within each epoch?
+        else:
+            self.STEPS_PER_EPOCH = self.TRAINING_DATA_SIZE//self.BATCH_SIZE                                                     # How many batches do we use to train within each epoch?
+        
         self.set_noise(self.NOISES_LIST[0])
 
         self.ALL_SEGMENTATION_OUTPUT_FOLDER = [os.path.join(self.MAIN_OUTPUT_FOLDER, "segmentation/", method_name) for method_name in self.EVALUATE_METHODS_LIST]
@@ -153,5 +155,21 @@ class Config:
         if self.NOISE == "uniform_1":
             self.UNIFORM_MIN_VALUE = -0.5
             self.UNIFORM_MAX_VALUE = 0.5
+
+    def get_noise_function(self, noise_name):
+
+        if noise_name == "gaussian_1":
+            return data_utils.get_add_gaussian_noise_function(gaussian_noise_mean = 0, gaussian_noise_standard_desviation = 0.1)
+
+        if noise_name == "gaussian_2":
+            return data_utils.get_add_gaussian_noise_function(gaussian_noise_mean = 0, gaussian_noise_standard_desviation = 0.2)
+
+        if noise_name == "gaussian_3":
+            return data_utils.get_add_gaussian_noise_function(gaussian_noise_mean = 0, gaussian_noise_standard_desviation = 0.3)
+
+        if noise_name == "uniform_1":
+            return data_utils.get_add_uniform_noise_function(uniform_min_value=-0.5, uniform_max_value=0.5)
+
+        return None
             
 

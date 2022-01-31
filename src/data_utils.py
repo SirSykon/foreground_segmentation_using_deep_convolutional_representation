@@ -109,7 +109,6 @@ def autoencoder_data_generator(source_generator, preprocessing_function = None, 
         y_data : batch -> Batch of data after apply y_proprocessing_function (if exists) to x_data.
 
     """
-
     for data in source_generator:                       # For each data from the source_generator...
         x_data = data.copy()                            # We copy the batch.
         if not preprocessing_function is None:          # If the preprocessing function exists,

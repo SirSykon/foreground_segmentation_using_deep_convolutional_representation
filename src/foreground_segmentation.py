@@ -21,7 +21,7 @@ FUNCTIONS
 """
 Function to update Welford's online algorithm to obtain mean and variance.
 """
-@tf.function
+#@tf.functions
 def welford_update(existingAggregate, newValue):
     if existingAggregate is None:
         count = 0.
@@ -33,8 +33,6 @@ def welford_update(existingAggregate, newValue):
     else:
         (count, mean, M2) = existingAggregate
 
-    print(mean.dtype)
-    print(M2.dtype)
     count += 1
     delta = tf.subtract(newValue, mean)
     mean += tf.divide(delta, count)
@@ -47,7 +45,7 @@ def welford_update(existingAggregate, newValue):
 """
 Function to finalize Welford's online algorithm to obtain mean and variance.
 """
-@tf.function
+#@tf.function
 def welford_finalize(existingAggregate):
     (count, mean, M2) = existingAggregate
     if count < 2:
@@ -68,7 +66,6 @@ def welford_algorithm(image, autoencoder, existingAggregate, finalize):
                    
     else:                                                                           # We do not finalize.
         encoded_image = autoencoder.encode(tf.expand_dims(image,0))[0]              # We get the encoded image.
-        print(encoded_image)
         encoded_image = tf.cast(encoded_image, tf.float64)                          # We ensure is a tf double tensor.
         existingAggregate = welford_update(existingAggregate, encoded_image)        # We update Welford's online algorihtm.
         return existingAggregate
@@ -218,26 +215,51 @@ GENERAL INITIALIZATION
 
 GPU_utils.tensorflow_2_x_dark_magic_to_restrict_memory_use(configuration.GPU_TO_USE)
 
-autoencoder = Autoencoder.Autoencoder(configuration.MODEL_FOLDER_PATH, load = True)                    # We lad a generic autoencoder defined by the model path given as argument.
+# If an autoencoder for each scene and noise should be used.
+if configuration.TRAIN_SPECIFIC_AUTOENCODERS_FOR_EACH_SCENE_AND_NOISE:
+    main_model_saving_folder = configuration.MODEL_FOLDER_PATH                                              # We save the preffix in order to later create the correct path.
+
+# If a generic autoencoder should be used.
+else:
+    # We load the autoencoder.
+    autoencoder = Autoencoder.Autoencoder(configuration.MODEL_FOLDER_PATH, load = True)                     # We load a generic autoencoder defined by the model path given as argument.
 
 for (noise, category, video_name) in datasets_utils.get_change_detection_noises_categories_and_videos_list():
     print(noise)
     print(category)
     print(video_name)
     if category in configuration.CATEGORIES_TO_TEST:
+
+        # We get the information for the sequence.
         video_images_list, video_initial_roi_frame, video_last_roi_frame = datasets_utils.get_noise_change_detection_data(video_name, noise)
         print(f"Total images {len(video_images_list)}")
         print(f"ROI from {video_initial_roi_frame}")
-        segmentation_folder = os.path.join(configuration.SEGMENTATION_OUTPUT_FOLDER, 
-                                            noise,
-                                            category, 
-                                            video_name)
 
+        # If an autoencoder for each scene and noise should be used.
+        if configuration.TRAIN_SPECIFIC_AUTOENCODERS_FOR_EACH_SCENE_AND_NOISE:
+            # We load the autoencoder.
+            autoencoder = Autoencoder.Autoencoder(os.path.join(main_model_saving_folder, f"{video_name}_{noise}"), load = True)                    # We load a generic autoencoder defined by the model path given as argument.
+            # We create the segmentation path.
+            segmentation_folder = os.path.join(configuration.SEGMENTATION_OUTPUT_FOLDER,
+                                                "specific_for_noise_and_sequence", 
+                                                noise,
+                                                category, 
+                                                video_name)
+
+        # If a generic autoencoder should be used.
+        else:
+            # We create segmentation path.
+            segmentation_folder = os.path.join(configuration.SEGMENTATION_OUTPUT_FOLDER, 
+                                                noise,
+                                                category, 
+                                                video_name)
+
+        # We creathe the segmentation folder.
         print("segmentation folder: {}.".format(segmentation_folder))
-
         if not os.path.isdir(segmentation_folder):
             os.makedirs(segmentation_folder)
 
+        # Time information.
         processing_time = video_segmentation(video_images_list, (video_initial_roi_frame-1), autoencoder, segmentation_folder)
         bck_train_processing_time = processing_time[:(video_initial_roi_frame-1)]
         seg_img_processing_time = processing_time[(video_initial_roi_frame-1):]
