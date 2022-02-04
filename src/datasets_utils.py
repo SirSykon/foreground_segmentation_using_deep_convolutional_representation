@@ -47,8 +47,6 @@ def get_noise_change_detection_data(video_to_get_name, noise):
 
     noises_path = glob(os.path.join(dataset_path, "*"))                                 # We get the categories path.
     
-    noises_categories_and_videos_list = []
-    
     for noise_path in noises_path:                                                                      #For each noise path...
         _, noise_name = os.path.split(noise_path)                                                       # We get the noise name.
         if noise_name == noise:

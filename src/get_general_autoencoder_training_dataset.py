@@ -2,7 +2,7 @@
 Code to generate a dataset to train an autoencoder.
 This dataset will contain Config.TRAINING_DATA_SIZE patches with size Config.PATCH_IMG_SIZE extracted from Config.TRAINING_DATASET_PATH
 In order to get a lesser number of files, we will generate .npy files wih Config.TRAINING_DATA_PER_FILE paches in each file.
-So we will save Config.TRAINING_DATA_SIZE/Config.TRAINING_DATA_PER_FILE files wih Config.TRAINING_DATA_PER_FILE x Config.PATCH_IMG_SIZE instances.
+So we will save Config.TRAINING_DATA_SIZE/Config.TRAINING_DATA_PER_FILE files wih Config.TRAINING_DATA_PER_FILE instances.
 All will be saved in Config.NETWORK_TRAINING_DATA_PATH with names defined by Config.NETWORK_TRAINING_DATA_FILES_NAME_STRUCTURE.
 """
 

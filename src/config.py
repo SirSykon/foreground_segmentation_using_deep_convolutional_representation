@@ -23,11 +23,14 @@ class Config:
                                 "<class 'pybgs.SuBSENSE'>"]                                                                 # Methods names to be evaluated.
 
     NOISES_LIST = ["gaussian_1", "gaussian_2", "gaussian_3", "uniform_1"]                                                   # List of noises to use.
-    NOISES_LIST = ["uniform_1"]                                                                                            # List of noises to use.
+    #NOISES_LIST = ["uniform_1"]                                                                                            # List of noises to use.
 
-    TRAIN_SPECIFIC_AUTOENCODERS_FOR_EACH_SCENE_AND_NOISE = False                                                             # Do we train an specific autoencoder for each scene and noise?
+    TYPE_OF_AUTOENCODER = "SPECIFIC_TO_ORIGINAL_VIDEO_WITH_ADDED_NOISE"                                                     # Type of AE to be trained. Options:
+                                                                                                                            #   SPECIFIC_TO_ORIGINAL_VIDEO_WITH_ADDED_NOISE - One autoencoder for each sequence by adding noise on the fly to the original video.
+                                                                                                                            #   SPECIFIC_TO_SEQUENCE - One autoencoder for each sequence with included noise..
+                                                                                                                            #   GENERIC - One autoencoder for all sequences. Trained with imagenet.
 
-    NOISE_TO_ADD_TO_INPUT_DATA = "gaussian_2"
+    NOISE_TO_ADD_TO_INPUT_DATA = None
     NOISE_TO_ADD_TO_OUTPUT_DATA = None
 
     """
@@ -127,10 +130,10 @@ class Config:
         else:
             self.NETWORK_PROCESSED_REGIONS_OUTPUT_PATH = self.TESTING_OUTPUT_SUBFOLDER_PATH + self.NETWORK_MODEL_NAME + "/"     # Path to folder to save network processed regions.
 
-        if self.TRAIN_SPECIFIC_AUTOENCODERS_FOR_EACH_SCENE_AND_NOISE:
-            self.STEPS_PER_EPOCH = self.SPECIFIC_SEQUENCE_TRAINING_DATA_SIZE//self.BATCH_SIZE                                                                       # How many batches do we use to train within each epoch?
-        else:
+        if self.TYPE_OF_AUTOENCODER == "GENERIC":
             self.STEPS_PER_EPOCH = self.TRAINING_DATA_SIZE//self.BATCH_SIZE                                                     # How many batches do we use to train within each epoch?
+        else:
+            self.STEPS_PER_EPOCH = self.SPECIFIC_SEQUENCE_TRAINING_DATA_SIZE//self.BATCH_SIZE                                   # How many batches do we use to train within each epoch?
         
         self.set_noise(self.NOISES_LIST[0])
 

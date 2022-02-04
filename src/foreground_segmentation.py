@@ -215,14 +215,10 @@ GENERAL INITIALIZATION
 
 GPU_utils.tensorflow_2_x_dark_magic_to_restrict_memory_use(configuration.GPU_TO_USE)
 
-# If an autoencoder for each scene and noise should be used.
-if configuration.TRAIN_SPECIFIC_AUTOENCODERS_FOR_EACH_SCENE_AND_NOISE:
-    main_model_saving_folder = configuration.MODEL_FOLDER_PATH                                              # We save the preffix in order to later create the correct path.
-
 # If a generic autoencoder should be used.
-else:
+if configuration.TYPE_OF_AUTOENCODER == "GENERIC":
     # We load the autoencoder.
-    autoencoder = Autoencoder.Autoencoder(configuration.MODEL_FOLDER_PATH, load = True)                     # We load a generic autoencoder defined by the model path given as argument.
+    autoencoder = Autoencoder.Autoencoder(os.path.join(configuration.MODEL_FOLDER_PATH, "imagenet"), load = True)                     # We load a generic autoencoder defined by the model path given as argument.
 
 for (noise, category, video_name) in datasets_utils.get_change_detection_noises_categories_and_videos_list():
     print(noise)
@@ -236,20 +232,31 @@ for (noise, category, video_name) in datasets_utils.get_change_detection_noises_
         print(f"ROI from {video_initial_roi_frame}")
 
         # If an autoencoder for each scene and noise should be used.
-        if configuration.TRAIN_SPECIFIC_AUTOENCODERS_FOR_EACH_SCENE_AND_NOISE:
+        if configuration.TYPE_OF_AUTOENCODER == "SPECIFIC_TO_SEQUENCE":
             # We load the autoencoder.
-            autoencoder = Autoencoder.Autoencoder(os.path.join(main_model_saving_folder, f"{video_name}_{noise}"), load = True)                    # We load a generic autoencoder defined by the model path given as argument.
+            autoencoder = Autoencoder.Autoencoder(os.path.join(configuration.MODEL_FOLDER_PATH , f"{video_name}_{noise}"), load = True)                    # We load a generic autoencoder defined by the model path given as argument.
             # We create the segmentation path.
             segmentation_folder = os.path.join(configuration.SEGMENTATION_OUTPUT_FOLDER,
-                                                "specific_for_noise_and_sequence", 
+                                                "specific_to_sequence", 
+                                                noise,
+                                                category, 
+                                                video_name)
+
+        if configuration.TYPE_OF_AUTOENCODER == "SPECIFIC_TO_ORIGINAL_VIDEO_WITH_ADDED_NOISE":
+            # We load the autoencoder.
+            autoencoder = Autoencoder.Autoencoder(os.path.join(configuration.MODEL_FOLDER_PATH , f"{video_name}_added_during_training_{noise}"), load = True)                    # We load a generic autoencoder defined by the model path given as argument.
+            # We create the segmentation path.
+            segmentation_folder = os.path.join(configuration.SEGMENTATION_OUTPUT_FOLDER,
+                                                "specific_to_original_video_with_added_noise", 
                                                 noise,
                                                 category, 
                                                 video_name)
 
         # If a generic autoencoder should be used.
-        else:
+        if configuration.TYPE_OF_AUTOENCODER == "GENERIC":
             # We create segmentation path.
             segmentation_folder = os.path.join(configuration.SEGMENTATION_OUTPUT_FOLDER, 
+                                                "generic",
                                                 noise,
                                                 category, 
                                                 video_name)

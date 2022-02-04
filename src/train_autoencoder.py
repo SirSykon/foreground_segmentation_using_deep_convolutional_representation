@@ -171,6 +171,7 @@ def train_autoencoder(configuration, network_training_data_path=None, function_t
     else:
         data_files_paths = glob(os.path.join(network_training_data_path, "*"))
 
+    print(f"Training with data from {network_training_data_path}")
     # We will copy the configuration file.
     if not os.path.isdir(configuration.MODEL_FOLDER_PATH):
         os.makedirs(configuration.MODEL_FOLDER_PATH)
@@ -251,7 +252,7 @@ def train_autoencoder(configuration, network_training_data_path=None, function_t
     autoencoder.save()
 
 
-if configuration.TRAIN_SPECIFIC_AUTOENCODERS_FOR_EACH_SCENE_AND_NOISE:
+if configuration.TYPE_OF_AUTOENCODER == "SPECIFIC_TO_SEQUENCE":
     main_model_saving_folder = configuration.MODEL_FOLDER_PATH
     for (noise, category, video_name) in datasets_utils.get_change_detection_noises_categories_and_videos_list():
         print(noise)
@@ -269,7 +270,26 @@ if configuration.TRAIN_SPECIFIC_AUTOENCODERS_FOR_EACH_SCENE_AND_NOISE:
             print(f"{noise} noise or {category} category combination is not in configuration.")
     configuration.MODEL_FOLDER_PATH = main_model_saving_folder
 
-else:
+if configuration.TYPE_OF_AUTOENCODER == "SPECIFIC_TO_ORIGINAL_VIDEO_WITH_ADDED_NOISE":
+    main_model_saving_folder = configuration.MODEL_FOLDER_PATH
+    for (noise, category, video_name) in datasets_utils.get_change_detection_noises_categories_and_videos_list():
+        print(noise)
+        print(category)
+        print(video_name)
+        if category in configuration.CATEGORIES_TO_TEST and noise in configuration.NOISES_LIST:
+            configuration.MODEL_FOLDER_PATH = os.path.join(main_model_saving_folder, f"{video_name}_added_during_training_{noise}")
+            training_data_folder = os.path.join(configuration.NETWORK_TRAINING_DATA_PATH, f"{video_name}")
+            train_autoencoder(
+                configuration, 
+                network_training_data_path=training_data_folder,
+                function_to_apply_to_x_data=configuration.get_noise_function(noise),
+                function_to_apply_to_y_data=configuration.get_noise_function(configuration.NOISE_TO_ADD_TO_OUTPUT_DATA))
+        else:
+            print(f"{noise} noise or {category} category combination is not in configuration.")
+    configuration.MODEL_FOLDER_PATH = main_model_saving_folder
+
+
+if configuration.TYPE_OF_AUTOENCODER == "GENERIC":
     configuration.MODEL_FOLDER_PATH = os.path.join(configuration.MODEL_FOLDER_PATH, "imagenet")
     training_data_folder = os.path.join(configuration.NETWORK_TRAINING_DATA_PATH, "imagenet")
     train_autoencoder(

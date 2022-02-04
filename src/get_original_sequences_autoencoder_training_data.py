@@ -1,6 +1,6 @@
 """
 Code to generate datasets to train an autoencoder.
-This dataset will contain Config.SPECIFIC_SEQUENCE_TRAINING_DATA_SIZE patches with size Config.PATCH_IMG_SIZE extracted from Config.NOISE_CHANGEDETECTON_DATASET_PATH
+This dataset will contain Config.SPECIFIC_SEQUENCE_TRAINING_DATA_SIZE patches with size Config.PATCH_IMG_SIZE extracted from Config.CHANGEDETECTON_DATASET_PATH
 In order to get a lesser number of files, we will generate .npy files wih Config.TRAINING_DATA_PER_FILE paches in each file.
 So we will save Config.SPECIFIC_SEQUENCE_TRAINING_DATA_SIZE/Config.TRAINING_DATA_PER_FILE files wih Config.TRAINING_DATA_PER_FILE instances.
 All will be saved in Config.NETWORK_TRAINING_DATA_PATH with names defined by Config.NETWORK_TRAINING_DATA_FILES_NAME_STRUCTURE.
@@ -27,12 +27,11 @@ if not os.path.isdir(configuration.NETWORK_TRAINING_DATA_PATH):                 
 all_images_paths = glob(os.path.join(configuration.TRAINING_DATASET_PATH,"*"))                         # We get the list of images paths.
 number_of_training_data_files = int(configuration.SPECIFIC_SEQUENCE_TRAINING_DATA_SIZE / configuration.TRAINING_DATA_PER_FILE)  # We get the number of training data files that we will generate.
 
-for (noise, category, video_name) in datasets_utils.get_change_detection_noises_categories_and_videos_list():
-    print(noise)
+for (category, video_name) in datasets_utils.get_change_detection_categories_and_videos_list():
     print(category)
     print(video_name)
-    if category in configuration.CATEGORIES_TO_TEST and noise in configuration.NOISES_LIST:
-        video_images_list, video_initial_roi_frame, video_last_roi_frame = datasets_utils.get_noise_change_detection_data(video_name, noise)
+    if category in configuration.CATEGORIES_TO_TEST:
+        video_images_list, video_initial_roi_frame, video_last_roi_frame = datasets_utils.get_original_change_detection_data(video_name)
         print(f"Initial ROI frame: {video_initial_roi_frame}")
         for training_data_file_index in range(number_of_training_data_files):
             training_data_in_file = None                                                                                    # Matrix that contains the data that will be saved in this file.
@@ -67,7 +66,7 @@ for (noise, category, video_name) in datasets_utils.get_change_detection_noises_
 
             folder_name = os.path.join(
                 configuration.NETWORK_TRAINING_DATA_PATH, 
-                f"{video_name}_{noise}")                                                                        # We generate the folder name.
+                f"{video_name}")                                                                            # We generate the folder name.
 
             if not os.path.isdir(folder_name):
                 os.makedirs(folder_name)
@@ -80,4 +79,4 @@ for (noise, category, video_name) in datasets_utils.get_change_detection_noises_
             np.save(file_name, training_data_in_file)                                                           # We save the file.
 
     else:
-        print(f"{noise} noise or {category} category combination is not in configuration.")
+        print(f"{category} is not included in test list..")
