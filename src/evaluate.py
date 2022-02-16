@@ -50,11 +50,14 @@ for method, method_output_path in zip(configuration.EVALUATE_METHODS_LIST, confi
     all_data_df.to_csv(path_or_buf = os.path.join(evaluation_folder, "evaluation.csv"))
 
 pd.set_option("display.max_rows", None, "display.max_columns", None)
+all_data_df = all_data_df[["method", "noise", "category", "f-measure"]]
 print(all_data_df)
 print(all_data_df.to_latex)
 print(all_data_df.groupby(["method", "noise", "category"]).mean())
-        
-    
+grouped_data = all_data_df.groupby(["method", "noise", "category"]).mean()
+
+pivoted_data = pd.pivot_table(grouped_data, values='f-measure', index=['noise', 'method'], columns=['category'])
+print(pivoted_data.to_latex())
     
     
     

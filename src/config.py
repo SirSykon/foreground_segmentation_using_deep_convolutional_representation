@@ -9,25 +9,31 @@ class Config:
     """
     CONFIG_FILE_PATH = os.path.abspath("./config.py")
     TRAINING = False                                                                                                        # Configuration for training.
-    NETWORK_MODEL_NAME = "conv9"                                                                                           # Network model name.
+    NETWORK_MODEL_NAME = "conv7"                                                                                           # Network model name.
     CATEGORIES_TO_TEST = ["baseline","dynamicBackground","badWeather","shadow", "lowFramerate", "intermittentObjectMotion", "nightVideos", "turbulence", "thermal"]
     CATEGORIES_TO_TEST = ["baseline","dynamicBackground","badWeather", "nightVideos", "turbulence", "thermal"]
     CATEGORIES_TO_TEST = ["baseline","badWeather", "thermal"]
     CATEGORIES_TO_TEST = ["dynamicBackground","baseline"]
 
-    EVALUATE_METHODS_LIST = [   "conv7", 
-                                "conv9", 
-                                "conv11",
-                                "<class 'pybgs.LOBSTER'>",
-                                "<class 'pybgs.PAWCS'>",
-                                "<class 'pybgs.SuBSENSE'>"]                                                                 # Methods names to be evaluated.
+    EVALUATE_METHODS_LIST = [   "conv5/generic",
+                                "conv5/specific_to_sequence",
+                                "conv5/specific_to_original_video_with_added_noise", 
+                                "conv7/generic",
+                                "conv7/specific_to_sequence",
+                                "conv7/specific_to_original_video_with_added_noise",
+                                "conv9/generic",
+                                "conv9/specific_to_sequence",
+                                "conv9/specific_to_original_video_with_added_noise", 
+                                "LOBSTER",
+                                "PAWCS",
+                                "SuBSENSE"]                                                                 # Methods names to be evaluated.
 
     NOISES_LIST = ["gaussian_1", "gaussian_2", "gaussian_3", "uniform_1"]                                                   # List of noises to use.
     #NOISES_LIST = ["uniform_1"]                                                                                            # List of noises to use.
 
-    TYPE_OF_AUTOENCODER = "SPECIFIC_TO_ORIGINAL_VIDEO_WITH_ADDED_NOISE"                                                     # Type of AE to be trained. Options:
+    TYPE_OF_AUTOENCODER = "SPECIFIC_TO_SEQUENCE"                                                     # Type of AE to be trained. Options:
                                                                                                                             #   SPECIFIC_TO_ORIGINAL_VIDEO_WITH_ADDED_NOISE - One autoencoder for each sequence by adding noise on the fly to the original video.
-                                                                                                                            #   SPECIFIC_TO_SEQUENCE - One autoencoder for each sequence with included noise..
+                                                                                                                            #   SPECIFIC_TO_SEQUENCE - One autoencoder for each sequence with included noise.
                                                                                                                             #   GENERIC - One autoencoder for all sequences. Trained with imagenet.
 
     NOISE_TO_ADD_TO_INPUT_DATA = None
@@ -55,7 +61,6 @@ class Config:
     BGS_FOLDER = os.path.abspath("../../bgslibrary/")
 
     RIVALS_MAIN_OUTPUT_FOLDER = "../output/rivals/"
-    RIVALS_MAIN_OUTPUT_FOLDER = "/media/sykon/Maxtor/Files/Work/foreground_segmentation_using_deep_convolutional_representation/rivals" 
 
     """
     Training configuration.
